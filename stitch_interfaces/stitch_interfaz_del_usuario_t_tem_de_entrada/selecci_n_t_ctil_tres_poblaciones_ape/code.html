@@ -1,0 +1,130 @@
+<!DOCTYPE html><html class="light" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#39A900", // SENA Green
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1.5rem", "3xl": "2rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .touch-active:active { transform: scale(0.98); transition: transform 0.1s; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen overflow-hidden flex flex-col">
+<!-- Top Navigation Bar / Header -->
+<header class="w-full bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-8 py-6 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-4">
+<div class="bg-primary p-2 rounded-lg">
+<svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M39.475 21.6262C40.358 21.4363 40.6863 21.5589 40.7581 21.5934C40.7876 21.655 40.8547 21.857 40.8082 22.3336C40.7408 23.0255 40.4502 24.0046 39.8572 25.2301C38.6799 27.6631 36.5085 30.6631 33.5858 33.5858C30.6631 36.5085 27.6632 38.6799 25.2301 39.8572C24.0046 40.4502 23.0255 40.7407 22.3336 40.8082C21.8571 40.8547 21.6551 40.7875 21.5934 40.7581C21.5589 40.6863 21.4363 40.358 21.6262 39.475C21.8562 38.4054 22.4689 36.9657 23.5038 35.2817C24.7575 33.2417 26.5497 30.9744 28.7621 28.762C30.9744 26.5497 33.2417 24.7574 35.2817 23.5037C36.9657 22.4689 38.4054 21.8562 39.475 21.6262ZM4.41189 29.2403L18.7597 43.5881C19.8813 44.7097 21.4027 44.9179 22.7217 44.7893C24.0585 44.659 25.5148 44.1631 26.9723 43.4579C29.9052 42.0387 33.2618 39.5667 36.4142 36.4142C39.5667 33.2618 42.0387 29.9052 43.4579 26.9723C44.1631 25.5148 44.659 24.0585 44.7893 22.7217C44.9179 21.4027 44.7097 19.8813 43.5881 18.7597L29.2403 4.41187C27.8527 3.02428 25.8765 3.02573 24.2861 3.36776C22.6081 3.72863 20.7334 4.58419 18.8396 5.74801C16.4978 7.18716 13.9881 9.18353 11.5858 11.5858C9.18354 13.988 7.18717 16.4978 5.74802 18.8396C4.58421 20.7334 3.72865 22.6081 3.36778 24.2861C3.02574 25.8765 3.02429 27.8527 4.41189 29.2403Z" fill-rule="evenodd"></path>
+</svg>
+</div>
+<div>
+<h2 class="text-2xl font-extrabold tracking-tight text-primary" style="">SENA APE</h2>
+<p class="text-slate-500 dark:text-zinc-400 font-medium text-sm uppercase tracking-widest" style="">Servicio Público de Empleo</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2 min-w-[300px]">
+<div class="flex justify-between w-full text-sm font-semibold mb-1">
+<span class="text-primary" style="">PASO: SELECCIÓN DE ATENCIÓN</span>
+<span class="text-slate-400" style="">1 de 2</span>
+</div>
+<div class="w-full bg-slate-100 dark:bg-zinc-800 h-3 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-1/3 rounded-full"></div>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col items-center justify-center p-8 gap-8">
+<div class="text-center max-w-3xl">
+<h1 class="text-5xl font-extrabold text-slate-900 dark:text-white mb-4" style="">Bienvenido</h1>
+<p class="text-2xl text-slate-600 dark:text-zinc-300 font-medium" style="">Por favor, seleccione el tipo de atención que requiere hoy</p>
+</div>
+<!-- Three Card Selection Grid -->
+<div class="flex-1 w-full max-w-[1400px] grid grid-cols-1 md:grid-cols-3 gap-8 py-4">
+<!-- Option 1: Población Víctima -->
+<button class="touch-active relative group overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border-4 border-transparent hover:border-primary transition-all duration-300 shadow-2xl flex flex-col" style="">
+<div class="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-60 transition-opacity" style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuDgDJKAepli-Y225T3qOntQE1Q4AE9P3qQI9jZB0WCQKntt6GVAn0PEbrZZoGRvOHlhA3Slnm2MfdJqH0Tx5a4FwladzwrodT-xFJ9K9jzx88ObGL9_28pImbsAzaX7ArSz27Me5DD2moVno7-L9vM393uiklA6V6ppNtqhru2dfTPhSDgj_aG6CL77p-h9tRRR4ZtZZ77fTLV6U9vqczN4gk5d49y5nSld8GDu3Qbbs8XIO3kE5-0-8BbKJ8iMPScTYVYi3IX7kWkp&quot;);"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+<div class="relative z-10 flex-1 flex flex-col items-center justify-center p-8 text-center text-white">
+<div class="bg-white/20 backdrop-blur-md p-6 rounded-full mb-6 ring-1 ring-white/30">
+<span class="material-symbols-outlined !text-6xl" style="">handshake</span>
+</div>
+<h3 class="text-4xl font-black mb-4" style="">Población Víctima</h3>
+<p class="text-lg font-medium opacity-90 max-w-[240px] leading-relaxed" style="">Atención especializada para víctimas del conflicto armado.</p>
+</div>
+<div class="relative z-10 bg-primary/95 py-6 text-white font-bold text-xl uppercase tracking-[0.2em]" style="">
+                    Seleccionar
+                </div>
+</button>
+<!-- Option 2: Población Prioridad -->
+<button class="touch-active relative group overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border-4 border-transparent hover:border-primary transition-all duration-300 shadow-2xl flex flex-col" style="">
+<div class="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-60 transition-opacity" style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuB5ofCk_XfMqf5905mbqXURD3ZZVUjVnBCIh6HGjIHcb8Xt0HEIO9CNTh0SYbgO3UFeZsdIhMtoKEvdcwVGEdXwA3VAlbNpBWyPjN2ZlvqMpBfrtSkXIMz79uhfe-01rYk5XRqZL2ZWqlUTDMJHo10gxfe4Cy3LU9n3HfdsAct228h-vt46Ysvf0Fz07-UfjY-TEjSY9sR1uvYEttqJ9Tjf73jr_SJEBMItpQEsfXXu0acFcUixh6Bstx9YRJ__pETRV-WmLJkbYMo9&quot;);"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+<div class="relative z-10 flex-1 flex flex-col items-center justify-center p-8 text-center text-white">
+<div class="bg-white/20 backdrop-blur-md p-6 rounded-full mb-6 ring-1 ring-white/30">
+<span class="material-symbols-outlined !text-6xl" style="">accessible_forward</span>
+</div>
+<h3 class="text-4xl font-black mb-4" style="">Población Prioridad</h3>
+<p class="text-lg font-medium opacity-90 max-w-[240px] leading-relaxed" style="">Adultos mayores, personas con discapacidad o mujeres gestantes.</p>
+</div>
+<div class="relative z-10 bg-primary/95 py-6 text-white font-bold text-xl uppercase tracking-[0.2em]" style="">
+                    Seleccionar
+                </div>
+</button>
+<!-- Option 3: Población General -->
+<button class="touch-active relative group overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border-4 border-transparent hover:border-primary transition-all duration-300 shadow-2xl flex flex-col" style="">
+<div class="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-60 transition-opacity" style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuCaKtiA5Tr4SiUlv_iu6aR-hM0Jk4-YE8urtLzfjvPuEnSIL6o7h6E_CLuXhDA2ABct3ko0wUk_p201AFOFBDRi0eTxF74yxtOsXwNztI61AbC8QFus7Su-k108cFHzF4YQ4I8pqMuQd7sV93ko-Ag1T1BHwPe0VX0x0AzCFzljv-Q2dzgYqV8ARGihrCv9lFVBqTmIrOxx_wmgpcVJZo5SI9PZfbIXudpmp6FMG_GjoIwhEKHFlv7vnbkw5l7P6lIM-zVM8SzT_Nx6&quot;);"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+<div class="relative z-10 flex-1 flex flex-col items-center justify-center p-8 text-center text-white">
+<div class="bg-white/20 backdrop-blur-md p-6 rounded-full mb-6 ring-1 ring-white/30">
+<span class="material-symbols-outlined !text-6xl" style="">groups</span>
+</div>
+<h3 class="text-4xl font-black mb-4" style="">Población General</h3>
+<p class="text-lg font-medium opacity-90 max-w-[240px] leading-relaxed" style="">Registro, postulación a vacantes y orientación laboral general.</p>
+</div>
+<div class="relative z-10 bg-primary/95 py-6 text-white font-bold text-xl uppercase tracking-[0.2em]" style="">
+                    Seleccionar
+                </div>
+</button>
+</div>
+</main>
+<!-- Footer / Accessibility Bar -->
+<footer class="w-full bg-slate-100 dark:bg-zinc-800/50 py-6 px-12 flex justify-between items-center border-t border-slate-200 dark:border-zinc-800">
+<div class="flex items-center gap-4 text-slate-500 dark:text-zinc-400">
+<span class="material-symbols-outlined" style="">language</span>
+<span class="font-bold text-lg uppercase tracking-tight" style="">Español</span>
+</div>
+<div class="flex gap-6">
+<button class="flex items-center gap-2 px-6 py-3 rounded-xl bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 font-bold shadow-sm border border-slate-200 dark:border-zinc-700 touch-active" style="">
+<span class="material-symbols-outlined" style="">volume_up</span>
+                Asistencia por Voz
+            </button>
+<button class="flex items-center gap-2 px-6 py-3 rounded-xl bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 font-bold shadow-sm border border-slate-200 dark:border-zinc-700 touch-active" style="">
+<span class="material-symbols-outlined" style="">contrast</span>
+                Alto Contraste
+            </button>
+</div>
+<div class="text-slate-400 dark:text-zinc-500 font-semibold text-sm" style="">
+            Kiosco ID: BOG-SENA-042
+        </div>
+</footer>
+</body></html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#39A900", // SENA Green for "Siguiente" and accents
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                        "sena-orange": "#ec5b13",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<title>SENA APE Advisor Dashboard</title>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-6 lg:px-10 py-3">
+<div class="max-w-7xl mx-auto flex items-center justify-between">
+<!-- Institutional Logo & Brand -->
+<div class="flex items-center gap-3">
+<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
+<span class="material-symbols-outlined text-2xl">account_balance</span>
+</div>
+<div class="flex flex-col">
+<h2 class="text-lg font-extrabold leading-tight tracking-tight text-slate-900 dark:text-white">SENA APE</h2>
+<p class="text-[10px] uppercase tracking-widest font-bold text-slate-500">Agencia Pública de Empleo</p>
+</div>
+</div>
+<!-- Sophisticated Status Toggle & Profile -->
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3 border-l border-slate-200 dark:border-slate-700 pl-6">
+<div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-sena-orange/10 border border-sena-orange/20 text-sena-orange mr-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sena-orange opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-sena-orange"></span>
+</span>
+<span class="text-[10px] font-black uppercase tracking-wider">Ocupado</span>
+</div><button class="relative p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 block h-2 w-2 rounded-full bg-sena-orange ring-2 ring-white"></span>
+</button>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-bold text-slate-900 dark:text-white leading-none">Carlos Rodríguez</p>
+<p class="text-xs text-slate-500 mt-1">Sede Central - Bogotá</p>
+</div>
+<div class="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden ring-2 ring-primary/20">
+<img class="h-full w-full object-cover" data-alt="Professional headshot of a smiling male advisor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHhGhjrP6FIWPq5-Rv2lNVihoDxjWwZSUmrxBA6WOFifeHg10YU8dIBUIQOwcPnUrsTzU9KsxubM_FjLW5BGDd8BEb5LweQE_mAOnKA_nQoLwMjacrIBn9Ui4fDfY0y_MIEwBK5pgkHvD3_2amQvQMJBKsE-g1vFIPItytjSBTGmoggBs1UvKNMJBDk1qiK1jfnlYa2hDd-Cj6qfnUWXUwyL9HY-iHXZOTJV3C9TZkAZpqI2xNNGzoLyNPcPzcRDJb3bUVWqRBOOpt"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-6 lg:px-10 py-8">
+<!-- Breadcrumbs & Title -->
+<div class="mb-8">
+<h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Dashboard de Atención</h1>
+<p class="text-slate-500 mt-1">Bienvenido de nuevo, Carlos. Gestiona tus turnos de hoy.</p>
+</div>
+<!-- Key Metrics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+<div class="group bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:border-primary/30 transition-all">
+<div class="flex items-center justify-between mb-4">
+<div class="p-3 rounded-xl bg-primary/10 text-primary">
+<span class="material-symbols-outlined">groups</span>
+</div>
+<span class="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-full">+12% hoy</span>
+</div>
+<p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Ciudadanos Atendidos</p>
+<div class="flex items-baseline gap-2 mt-1">
+<p class="text-4xl font-black text-slate-900 dark:text-white">24</p>
+<p class="text-slate-400 text-sm">personas</p>
+</div>
+</div>
+<div class="group bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:border-sena-orange/30 transition-all">
+<div class="flex items-center justify-between mb-4">
+<div class="p-3 rounded-xl bg-sena-orange/10 text-sena-orange">
+<span class="material-symbols-outlined">timer</span>
+</div>
+<span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">Meta: 15 min</span>
+</div>
+<p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Tiempo Promedio</p>
+<div class="flex items-baseline gap-2 mt-1">
+<p class="text-4xl font-black text-slate-900 dark:text-white">12:45</p>
+<p class="text-slate-400 text-sm">minutos</p>
+</div>
+</div>
+</div>
+<!-- Central Focus Card: Turno Actual -->
+<div class="relative bg-white dark:bg-slate-900 rounded-[2rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-2 bg-sena-orange"></div>
+<div class="grid grid-cols-1 lg:grid-cols-12">
+<!-- Left: Information -->
+<div class="lg:col-span-8 p-10 lg:p-16">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-6 bg-sena-orange/10 text-sena-orange"><span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sena-orange opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-sena-orange"></span>
+</span>
+                        OCUPADO
+                    </div>
+<div class="space-y-12">
+<div>
+<p class="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-2">Turno Actual</p>
+<h2 class="text-7xl lg:text-9xl font-black text-slate-900 dark:text-white tracking-tighter">N-042</h2>
+</div>
+<div class="flex flex-wrap gap-12">
+<div>
+<p class="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-1">Documento</p>
+<p class="text-3xl font-bold text-slate-700 dark:text-slate-300">1.023.445.678</p>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-1">Tipo de Trámite</p>
+<p class="text-3xl font-bold text-slate-700 dark:text-slate-300">Asesoría Laboral</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Right: Action Area -->
+<div class="lg:col-span-4 bg-slate-50 dark:bg-slate-800/50 p-10 lg:p-16 flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-slate-100 dark:border-slate-800">
+<div class="space-y-6">
+<button class="w-full group relative flex items-center justify-center gap-3 bg-primary hover:bg-primary/90 text-white py-6 rounded-2xl shadow-lg shadow-primary/25 transition-all active:scale-[0.98]">
+<span class="text-xl font-black tracking-widest">SIGUIENTE</span>
+<span class="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward_ios</span>
+</button>
+<div class="grid grid-cols-2 gap-4">
+<button class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined">not_interested</span>
+<span class="text-xs font-bold uppercase">No Asistió</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined">forward</span>
+<span class="text-xs font-bold uppercase">Transferir</span>
+</button>
+</div>
+<div class="pt-6 mt-6 border-t border-slate-200 dark:border-slate-700">
+<div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
+<span>Tiempo Transcurrido</span>
+<span class="text-sena-orange">04:12</span>
+</div>
+<div class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mt-2 overflow-hidden">
+<div class="w-1/3 h-full rounded-full bg-sena-orange"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Activity Table -->
+<div class="mt-12">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white">Historial Reciente</h3>
+<button class="text-primary text-sm font-bold hover:underline flex items-center gap-1">
+                    Ver todo <span class="material-symbols-outlined text-sm">open_in_new</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-slate-200 dark:border-slate-800">
+<th class="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Turno</th>
+<th class="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Ciudadano</th>
+<th class="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Hora Inicio</th>
+<th class="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Duración</th>
+<th class="py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Estado</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="py-4 px-4 font-bold text-slate-900 dark:text-white">N-041</td>
+<td class="py-4 px-4 text-slate-600 dark:text-slate-400">Maria Fernanda Lopez</td>
+<td class="py-4 px-4 text-slate-600 dark:text-slate-400">09:45 AM</td>
+<td class="py-4 px-4 text-slate-600 dark:text-slate-400">14:20 min</td>
+<td class="py-4 px-4 text-right">
+<span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase">Completado</span>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="py-4 px-4 font-bold text-slate-900 dark:text-white">N-040</td>
+<td class="py-4 px-4 text-slate-600 dark:text-slate-400">Juan Pablo Duarte</td>
+<td class="py-4 px-4 text-slate-600 dark:text-slate-400">09:20 AM</td>
+<td class="py-4 px-4 text-slate-600 dark:text-slate-400">22:05 min</td>
+<td class="py-4 px-4 text-right">
+<span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase">Completado</span>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="py-4 px-4 font-bold text-slate-900 dark:text-white">N-039</td>
+<td class="py-4 px-4 text-slate-600 dark:text-slate-400">Camilo Torres</td>
+<td class="py-4 px-4 text-slate-600 dark:text-slate-400">09:15 AM</td>
+<td class="py-4 px-4 text-slate-600 dark:text-slate-400">--</td>
+<td class="py-4 px-4 text-right">
+<span class="px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-[10px] font-black uppercase">No Asistió</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+<!-- Simple Footer -->
+<footer class="max-w-7xl mx-auto px-6 lg:px-10 py-12 mt-12 border-t border-slate-200 dark:border-slate-800 text-center">
+<p class="text-sm text-slate-400">© 2024 SENA Agencia Pública de Empleo. Todos los derechos reservados.</p>
+</footer>
+</body></html>

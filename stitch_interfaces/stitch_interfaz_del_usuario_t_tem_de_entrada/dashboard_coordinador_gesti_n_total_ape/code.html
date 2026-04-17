@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#39a900", // SENA Green
+                        "primary-accent": "#ec5b13", // Theme primary as accent
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "3xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .chart-gradient-green { background: linear-gradient(180deg, rgba(57, 169, 0, 0.2) 0%, rgba(57, 169, 0, 0) 100%); }
+        /* Custom scrollbar for better touch experience */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header / Navigation -->
+<header class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark px-6 md:px-10 py-4 sticky top-0 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="size-10 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-3xl">analytics</span>
+</div>
+<div>
+<h2 class="text-slate-900 dark:text-white text-lg font-extrabold leading-tight tracking-tight">APE SENA</h2>
+<p class="text-xs font-semibold text-primary uppercase tracking-widest">Impacto Social</p>
+</div>
+</div>
+<nav class="hidden lg:flex items-center gap-6">
+<a class="text-primary text-sm font-semibold border-b-2 border-primary pb-1" href="#">Dashboard</a>
+<a class="text-slate-500 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#">Empleabilidad</a>
+<a class="text-slate-500 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#">Orientación</a>
+<a class="text-slate-500 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#">Regiones</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden sm:flex relative items-center">
+<span class="material-symbols-outlined absolute left-3 text-slate-400">search</span>
+<input class="form-input w-64 pl-10 pr-4 py-2 rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm" placeholder="Buscar métricas..." type="text"/>
+</div>
+<button class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-10 w-10 rounded-full border-2 border-primary overflow-hidden">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2tElQFcxO1epst9qZ0z7MayaD3Y93hPrOZBgVgSb0X4q6sDvjpGu4JzsbPPnaKdI4QN9-WpujmKjI2SLCyt0BizPjjtnQ_0Upjq3i_9vOV4ni_cJEax7LBN1Lo9Mlr-7Z_y9ovEyobQWKAPMvEtFBQdqzKoNdstsEx-3Ive7gjAoHJJU3dcV5SRCbTTXAyVzhR8QTzShfRpDyMxU48bsPElsACmg9Eg_suYOOi4KVEjYjMZHmFTIKrNwMf4yOnhm03M5qnupbGsZn"/>
+</div>
+</div>
+</header>
+<main class="flex-1 flex">
+<!-- Sidebar -->
+<aside class="hidden xl:flex w-72 flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark p-6 gap-8">
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Gestión Regional</p>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-bold">Resumen General</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">co_present</span>
+<span class="text-sm font-medium">Gestión de Módulos</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">badge</span>
+<span class="text-sm font-medium">Desempeño Asesores</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">location_on</span>
+<span class="text-sm font-medium">Mapa de Impacto</span>
+</div>
+</div>
+</div>
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Configuración</p>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Ajustes del Sistema</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined">description</span>
+<span class="text-sm font-medium">Histórico de Reportes</span>
+</div>
+</div>
+</div>
+<div class="mt-auto bg-primary-accent/10 p-4 rounded-2xl border border-primary-accent/20">
+<p class="text-xs font-bold text-primary-accent uppercase mb-2">Soporte Estratégico</p>
+<p class="text-xs text-slate-600 dark:text-slate-400 mb-3">¿Necesita asistencia técnica con los datos regionales?</p>
+<button class="w-full py-2 bg-primary-accent text-white text-xs font-bold rounded-lg hover:bg-primary-accent/90 transition-all">Contactar Soporte</button>
+</div>
+</aside>
+<!-- Content Area -->
+<div class="flex-1 overflow-y-auto p-6 lg:p-10 bg-slate-50 dark:bg-background-dark/50 space-y-8">
+<!-- Welcome Section -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div>
+<h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Impacto Social Regional</h1>
+<p class="text-slate-500 dark:text-slate-400 font-medium">Coordinación SENA • Cúcuta, Norte de Santander • <span class="text-primary font-bold">Junio 2024</span></p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:shadow transition-all">
+<span class="material-symbols-outlined text-primary">calendar_month</span>
+<span>Filtrar Fecha</span>
+</button>
+<button class="flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all">
+<span class="material-symbols-outlined text-lg">download</span>
+<span>Reporte Ejecutivo PDF</span>
+</button>
+</div>
+</div>
+<!-- Gestión de Módulos (Service Counters) -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">table_chart</span>
+                        Gestión de Módulos en Tiempo Real
+                    </h3>
+<span class="px-2.5 py-1 bg-green-100 text-green-700 text-[10px] font-black rounded-full uppercase tracking-tighter">En Vivo</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Module 1 -->
+<div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Módulo 01</span>
+<span class="text-sm font-extrabold dark:text-white">Ricardo Sánchez</span>
+</div>
+<span class="flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-full">
+<span class="size-1.5 rounded-full bg-primary animate-pulse"></span> ACTIVO
+                            </span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<span class="text-slate-500">Turno actual:</span>
+<span class="font-black text-primary text-base">A-042</span>
+</div>
+</div>
+<!-- Module 2 -->
+<div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Módulo 02</span>
+<span class="text-sm font-extrabold dark:text-white">Martha Lucia Jaimes</span>
+</div>
+<span class="flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-full">
+<span class="size-1.5 rounded-full bg-primary animate-pulse"></span> ACTIVO
+                            </span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<span class="text-slate-500">Turno actual:</span>
+<span class="font-black text-primary text-base">B-015</span>
+</div>
+</div>
+<!-- Module 3 -->
+<div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col gap-4 opacity-80">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Módulo 03</span>
+<span class="text-sm font-extrabold dark:text-white">Julian Arenas</span>
+</div>
+<span class="flex items-center gap-1.5 px-2 py-1 bg-amber-100 text-amber-600 text-[10px] font-bold rounded-full">
+<span class="size-1.5 rounded-full bg-amber-500"></span> EN PAUSA
+                            </span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<span class="text-slate-500">Tiempo pausa:</span>
+<span class="font-bold">12:05 min</span>
+</div>
+</div>
+<!-- Module 4 -->
+<div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Módulo 04</span>
+<span class="text-sm font-extrabold dark:text-white">Elena Peñaranda</span>
+</div>
+<span class="flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-full">
+<span class="size-1.5 rounded-full bg-primary animate-pulse"></span> ACTIVO
+                            </span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<span class="text-slate-500">Turno actual:</span>
+<span class="font-black text-primary text-base">C-009</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Metrics Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+<div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 relative overflow-hidden group">
+<div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-primary">handshake</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider mb-2">Vinculaciones Exitosas</p>
+<div class="flex items-baseline gap-2">
+<h3 class="text-4xl font-black text-slate-900 dark:text-white">12,450</h3>
+<span class="text-primary text-sm font-bold">+12.5%</span>
+</div>
+<div class="mt-4 h-1.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%] rounded-full"></div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 relative overflow-hidden group">
+<div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-primary-accent">assignment_turned_in</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider mb-2">Vacantes Cubiertas</p>
+<div class="flex items-baseline gap-2">
+<h3 class="text-4xl font-black text-slate-900 dark:text-white">8,920</h3>
+<span class="text-primary text-sm font-bold">+8.2%</span>
+</div>
+<div class="mt-4 h-1.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary-accent w-[62%] rounded-full"></div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 relative overflow-hidden group">
+<div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-primary">diversity_3</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider mb-2">Buscadores Orientados</p>
+<div class="flex items-baseline gap-2">
+<h3 class="text-4xl font-black text-slate-900 dark:text-white">25,600</h3>
+<span class="text-primary text-sm font-bold">+15.7%</span>
+</div>
+<div class="mt-4 h-1.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[88%] rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Estadísticas por Asesor -->
+<section>
+<div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+<div class="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+<div>
+<h4 class="text-lg font-bold text-slate-900 dark:text-white">Estadísticas por Asesor</h4>
+<p class="text-xs text-slate-500">Métricas individuales de rendimiento y satisfacción</p>
+</div>
+<button class="flex items-center gap-1.5 text-primary text-sm font-bold hover:underline">
+<span class="material-symbols-outlined text-sm">visibility</span>
+                            Análisis Detallado
+                        </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-slate-50 dark:bg-slate-900/50">
+<th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Asesor</th>
+<th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Usuarios Atendidos</th>
+<th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Tiempo Promedio</th>
+<th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Satisfacción (CSAT)</th>
+<th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-center">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+<tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">RS</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold">Ricardo Sánchez</span>
+<span class="text-[10px] text-slate-400">Orientador Senior</span>
+</div>
+</div>
+</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-2">
+<span class="text-sm font-black">156</span>
+<span class="text-[10px] text-green-600 font-bold">+5%</span>
+</div>
+</td>
+<td class="px-8 py-4 text-sm font-medium">12:45 min</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-2">
+<div class="w-24 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[94%]"></div>
+</div>
+<span class="text-xs font-bold text-primary">4.9/5</span>
+</div>
+</td>
+<td class="px-8 py-4 text-center">
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-slate-400 text-lg">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">MJ</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold">Martha Lucia Jaimes</span>
+<span class="text-[10px] text-slate-400">Orientador Junior</span>
+</div>
+</div>
+</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-2">
+<span class="text-sm font-black">142</span>
+<span class="text-[10px] text-primary-accent font-bold">-2%</span>
+</div>
+</td>
+<td class="px-8 py-4 text-sm font-medium">15:10 min</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-2">
+<div class="w-24 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[88%]"></div>
+</div>
+<span class="text-xs font-bold text-primary">4.6/5</span>
+</div>
+</td>
+<td class="px-8 py-4 text-center">
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-slate-400 text-lg">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">EP</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold">Elena Peñaranda</span>
+<span class="text-[10px] text-slate-400">Orientador Senior</span>
+</div>
+</div>
+</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-2">
+<span class="text-sm font-black">189</span>
+<span class="text-[10px] text-green-600 font-bold">+12%</span>
+</div>
+</td>
+<td class="px-8 py-4 text-sm font-medium">11:20 min</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-2">
+<div class="w-24 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[98%]"></div>
+</div>
+<span class="text-xs font-bold text-primary">4.9/5</span>
+</div>
+</td>
+<td class="px-8 py-4 text-center">
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-slate-400 text-lg">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- Main Visualization Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Chart Area -->
+<div class="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex justify-between items-center mb-10">
+<div>
+<h4 class="text-lg font-bold text-slate-900 dark:text-white">Tendencia de Vinculación</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400">Comportamiento mensual consolidado</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-primary"></div>
+<span class="text-xs font-medium">Vinculaciones</span>
+</div>
+</div>
+</div>
+<div class="relative h-[240px] w-full mt-4 flex items-end justify-between px-4">
+<div class="flex flex-col items-center gap-4 w-12 group cursor-pointer">
+<div class="w-full bg-primary/20 rounded-t-lg transition-all group-hover:bg-primary/40" style="height: 120px;"></div>
+<span class="text-[10px] font-bold text-slate-400">ENE</span>
+</div>
+<div class="flex flex-col items-center gap-4 w-12 group cursor-pointer">
+<div class="w-full bg-primary/20 rounded-t-lg transition-all group-hover:bg-primary/40" style="height: 160px;"></div>
+<span class="text-[10px] font-bold text-slate-400">FEB</span>
+</div>
+<div class="flex flex-col items-center gap-4 w-12 group cursor-pointer">
+<div class="w-full bg-primary/50 rounded-t-lg transition-all group-hover:bg-primary/70" style="height: 210px;"></div>
+<span class="text-[10px] font-bold text-slate-400">MAR</span>
+</div>
+<div class="flex flex-col items-center gap-4 w-12 group cursor-pointer">
+<div class="w-full bg-primary/30 rounded-t-lg transition-all group-hover:bg-primary/50" style="height: 180px;"></div>
+<span class="text-[10px] font-bold text-slate-400">ABR</span>
+</div>
+<div class="flex flex-col items-center gap-4 w-12 group cursor-pointer">
+<div class="w-full bg-primary/20 rounded-t-lg transition-all group-hover:bg-primary/40" style="height: 150px;"></div>
+<span class="text-[10px] font-bold text-slate-400">MAY</span>
+</div>
+<div class="flex flex-col items-center gap-4 w-12 group cursor-pointer">
+<div class="w-full bg-primary rounded-t-lg transition-all group-hover:brightness-110" style="height: 240px;"></div>
+<span class="text-[10px] font-bold text-slate-900 dark:text-white">JUN</span>
+</div>
+</div>
+</div>
+<!-- Map Area -->
+<div class="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 relative overflow-hidden">
+<div class="flex justify-between items-center mb-6">
+<div>
+<h4 class="text-lg font-bold text-slate-900 dark:text-white">Impacto Territorial</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400">Norte de Santander: Distribución regional</p>
+</div>
+<button class="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
+<span class="material-symbols-outlined text-slate-500">fullscreen</span>
+</button>
+</div>
+<div class="relative w-full aspect-square md:aspect-video rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900">
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="relative w-3/4 h-3/4 opacity-40 grayscale group-hover:grayscale-0 transition-all">
+<img alt="Regional Map" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgXRcSFhjwW45rl_kefJGjqAnTtew74b_a5xL3Fl-sMBWvFloabiLi-0Kv9byVCXiTl47rEjwuc_R-_lH3PYmfk_4MU0ZFRyP35_Um-2foctzaSvbbwG3rNZ_yYa-grHA6mSqa1Ve-eKcwkT_ay9cHXgBnpJzapeXro-_Sk3watURwVh-akdIg1Nss5GZqrask17UnW5YpCdv4HQDQ8l_hnS7FeQf0G7POOVsaCZL1lYCMNUE4qOfYGvMD6XwsdMXYRpti9x_ZyF_E"/>
+</div>
+<!-- Strategic Points -->
+<div class="absolute top-1/3 left-1/2 -translate-x-1/2 group">
+<div class="size-4 bg-primary rounded-full animate-ping absolute opacity-50"></div>
+<div class="size-4 bg-primary rounded-full relative shadow-lg shadow-primary/40 cursor-help"></div>
+<div class="hidden group-hover:block absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 rounded-xl shadow-xl whitespace-nowrap z-10">
+<p class="text-xs font-bold">Cúcuta (Sede Central)</p>
+<p class="text-[10px] text-primary">6,420 Vinculaciones</p>
+</div>
+</div>
+</div>
+<!-- Map Legend Overlay -->
+<div class="absolute bottom-4 left-4 right-4 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-3 rounded-xl border border-white/20">
+<div class="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-primary"></div>
+<span>Alto Impacto</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-primary-accent"></div>
+<span>Zonas Priorizadas</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Activity / Table Section -->
+<div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+<div class="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+<h4 class="text-lg font-bold text-slate-900 dark:text-white">Últimas Alianzas Estratégicas</h4>
+<button class="text-primary text-sm font-bold hover:underline">Ver todas</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-slate-50 dark:bg-slate-900/50">
+<tr>
+<th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Empresa / Aliado</th>
+<th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Sector</th>
+<th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Vacantes</th>
+<th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Estado</th>
+<th class="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Impacto</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400">factory</span>
+</div>
+<span class="text-sm font-bold">Colanta Regional</span>
+</div>
+</td>
+<td class="px-8 py-4 text-sm">Agroindustria</td>
+<td class="px-8 py-4 text-sm font-semibold">124</td>
+<td class="px-8 py-4">
+<span class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-full uppercase">Activo</span>
+</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-2">
+<div class="flex -space-x-2">
+<div class="size-6 rounded-full border-2 border-white dark:border-slate-800 bg-slate-300"></div>
+<div class="size-6 rounded-full border-2 border-white dark:border-slate-800 bg-slate-400"></div>
+<div class="size-6 rounded-full border-2 border-white dark:border-slate-800 bg-primary text-[8px] flex items-center justify-center text-white">+80</div>
+</div>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400">apartment</span>
+</div>
+<span class="text-sm font-bold">Constructora Bolívar</span>
+</div>
+</td>
+<td class="px-8 py-4 text-sm">Construcción</td>
+<td class="px-8 py-4 text-sm font-semibold">56</td>
+<td class="px-8 py-4">
+<span class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-full uppercase">Activo</span>
+</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-2">
+<div class="flex -space-x-2">
+<div class="size-6 rounded-full border-2 border-white dark:border-slate-800 bg-slate-300"></div>
+<div class="size-6 rounded-full border-2 border-white dark:border-slate-800 bg-primary text-[8px] flex items-center justify-center text-white">+42</div>
+</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Info -->
+<footer class="bg-white dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 py-6 px-10 flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="flex items-center gap-4">
+<span class="text-xs font-bold text-slate-400">© 2024 SENA - Agencia Pública de Empleo</span>
+<span class="hidden md:block h-4 w-px bg-slate-200 dark:bg-slate-700"></span>
+<a class="text-xs font-medium text-slate-500 hover:text-primary transition-colors" href="#">Términos de Privacidad</a>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="size-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Sistema Operativo</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="material-symbols-outlined text-slate-400 hover:text-primary transition-colors">share</button>
+<button class="material-symbols-outlined text-slate-400 hover:text-primary transition-colors">help</button>
+</div>
+</div>
+</footer>
+</div>
+</body></html>
