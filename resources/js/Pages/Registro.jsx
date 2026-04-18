@@ -1,13 +1,28 @@
 import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Edit3, Smartphone, Delete, XCircle } from 'lucide-react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, ArrowRight, Edit3, Delete, XCircle } from 'lucide-react';
 
 export default function Registro() {
+    const { tipo_poblacion } = usePage().props;
     const [docType, setDocType] = useState('C.C.');
     const [docNumber, setDocNumber] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [activeInput, setActiveInput] = useState('docNumber');
+    const [processing, setProcessing] = useState(false);
+
+    const handleGenerarTurno = () => {
+        if (docNumber.length < 6 || processing) return;
+        setProcessing(true);
+        router.post(route('turno.generar'), {
+            tipo_documento: docType,
+            documento: docNumber,
+            telefono: phoneNumber || null,
+            tipo: tipo_poblacion || 'General',
+        }, {
+            onError: () => setProcessing(false),
+        });
+    };
 
     const handleKeypadPress = (val) => {
         if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) window.navigator.vibrate([20]);
@@ -225,14 +240,17 @@ export default function Registro() {
                     </a>
                     
                     {/* Botón Generar Turno */}
-                    <a href="#" className={`flex-[2] py-5 px-10 rounded-2xl text-2xl lg:text-3xl font-black flex items-center justify-center gap-4 transition-all z-50 touch-manipulation ${
-                        docNumber.length >= 6 
-                        ? 'bg-gradient-to-r from-[#39A900] to-[#266e00] text-white shadow-[0_10px_30px_rgba(57,169,0,0.4)] hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(57,169,0,0.6)] cursor-pointer active:scale-95' 
-                        : 'bg-white/5 text-gray-600 border border-white/5 pointer-events-none'
-                    }`}>
-                        <span className="pointer-events-none">GENERAR TURNO AHORA</span>
-                        <ArrowRight size={36} className={`pointer-events-none ${docNumber.length >= 6 ? 'text-white' : 'text-gray-600'}`} />
-                    </a>
+                    <button
+                        onClick={handleGenerarTurno}
+                        disabled={docNumber.length < 6 || processing}
+                        className={`flex-[2] py-5 px-10 rounded-2xl text-2xl lg:text-3xl font-black flex items-center justify-center gap-4 transition-all z-50 touch-manipulation ${
+                            docNumber.length >= 6 && !processing
+                            ? 'bg-gradient-to-r from-[#39A900] to-[#266e00] text-white shadow-[0_10px_30px_rgba(57,169,0,0.4)] hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(57,169,0,0.6)] cursor-pointer active:scale-95'
+                            : 'bg-white/5 text-gray-600 border border-white/5 pointer-events-none'
+                        }`}>
+                        <span>{processing ? 'GENERANDO...' : 'GENERAR TURNO AHORA'}</span>
+                        <ArrowRight size={36} className={docNumber.length >= 6 ? 'text-white' : 'text-gray-600'} />
+                    </button>
                 </div>
             </motion.footer>
         </div>

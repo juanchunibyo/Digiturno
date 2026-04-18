@@ -10,25 +10,25 @@ export default function SeleccionPoblacion() {
             title: "Población Víctima",
             desc: "Atención especializada para víctimas del conflicto armado.",
             icon: HeartHandshake,
-            link: "/registro"
+            link: "/registro?tipo=Víctimas"
         },
         {
             title: "Población Prioridad",
             desc: "Adultos mayores, personas con discapacidad o mujeres gestantes.",
             icon: Accessibility,
-            link: "/registro"
+            link: "/registro?tipo=Prioritaria"
         },
         {
             title: "Población General",
             desc: "Registro, postulación a vacantes y orientación laboral general.",
             icon: Users,
-            link: "/registro"
+            link: "/registro?tipo=General"
         },
         {
             title: "Atención Empresas",
             desc: "Gestión de vacantes y apoyo corporativo para empleadores.",
             icon: Building2,
-            link: "/registro"
+            link: "/registro?tipo=Empresa"
         }
     ];
 

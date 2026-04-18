@@ -48,15 +48,60 @@ export default function CoordinadorDashboard({ auth }) {
         { title: "Atenciones Hoy", value: "256", trend: "+45", trendUp: true, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-100" }
     ];
 
-    const asesores = [
-        { id: 1, name: "María Alejandra", box: "Taquilla 1", status: "ATENDIENDO", turn: "N-042", time: "05:12", avatar: "MA" },
-        { id: 2, name: "Carlos Ramírez", box: "Taquilla 2", status: "DISPONIBLE", turn: "--", time: "--", avatar: "CR" },
-        { id: 3, name: "Juana de Dios", box: "Taquilla 3", status: "ATENDIENDO", turn: "P-018", time: "14:45", avatar: "JD" },
-        { id: 4, name: "Pedro Páramo", box: "Taquilla 4", status: "PAUSA", turn: "--", time: "10:00", avatar: "PP" },
-        { id: 5, name: "Lucía Pineda", box: "Taquilla 5", status: "ATENDIENDO", turn: "V-003", time: "28:10", avatar: "LP" }, 
-    ];
+    const formatTime = (totalSeconds) => {
+        if(totalSeconds === 0) return "--";
+        const m = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+        const s = String(totalSeconds % 60).padStart(2, '0');
+        return `${m}:${s}`;
+    };
 
-        const ciudadanosEnEspera = [
+    const [asesores, setAsesores] = useState([
+        { id: 1, name: "María Alejandra", box: "Taquilla 1", status: "ATENDIENDO", turn: "N-042", timeInSeconds: 312, avatar: "MA", time: "05:12" },
+        { id: 2, name: "Carlos Ramírez", box: "Taquilla 2", status: "DISPONIBLE", turn: "--", timeInSeconds: 0, avatar: "CR", time: "--" },
+        { id: 3, name: "Juana de Dios", box: "Taquilla 3", status: "ATENDIENDO", turn: "P-018", timeInSeconds: 885, avatar: "JD", time: "14:45" },
+        { id: 4, name: "Pedro Páramo", box: "Taquilla 4", status: "PAUSA", turn: "--", timeInSeconds: 600, avatar: "PP", time: "10:00" },
+        { id: 5, name: "Lucía Pineda", box: "Taquilla 5", status: "ATENDIENDO", turn: "V-003", timeInSeconds: 1690, avatar: "LP", time: "28:10" }, 
+    ]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setAsesores(prev => prev.map(asesor => {
+                let current = { ...asesor };
+                
+                // 1. Incrementar tiempo activo cada segundo
+                if (current.status === 'ATENDIENDO' || current.status === 'PAUSA') {
+                    current.timeInSeconds += 1;
+                }
+
+                // 2. Simulación de vida: Pequeña probabilidad aleatoria de que los estados cambien
+                const rand = Math.random();
+                if (rand < 0.04) { // 4% de probabilidad por segundo de cambiar de estado
+                    if (current.status === 'DISPONIBLE') {
+                        current.status = 'ATENDIENDO';
+                        current.timeInSeconds = 0;
+                        current.turn = ['N-', 'P-', 'V-', 'E-'][Math.floor(Math.random()*4)] + Math.floor(100 + Math.random() * 900);
+                    } else if (current.status === 'ATENDIENDO' && current.timeInSeconds > 15) {
+                        current.status = Math.random() > 0.8 ? 'PAUSA' : 'DISPONIBLE';
+                        current.turn = '--';
+                        current.timeInSeconds = 0;
+                    } else if (current.status === 'PAUSA' && current.timeInSeconds > 10) {
+                        current.status = 'DISPONIBLE';
+                        current.turn = '--';
+                        current.timeInSeconds = 0;
+                    }
+                }
+                
+                current.time = current.timeInSeconds === 0 ? "--" : formatTime(current.timeInSeconds);
+                return current;
+            }));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    const asesoresAtendiendo = asesores.filter(a => a.status === 'ATENDIENDO').length;
+
+    const ciudadanosEnEspera = [
         { id: 1, turn: "N-089", type: "Prioritaria", waitTime: "42 min", alert: true },
         { id: 2, turn: "V-012", type: "Normal", waitTime: "18 min", alert: false },
         { id: 3, turn: "E-004", type: "Empresa", waitTime: "05 min", alert: false },
@@ -147,7 +192,7 @@ export default function CoordinadorDashboard({ auth }) {
                                 Actividad de los Asesores
                             </h3>
                             <div className="flex gap-3">
-                                <span className="flex items-center gap-2 text-xs font-bold text-green-700 bg-green-100 px-3 py-1.5 rounded-full"><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>3 Atendiendo</span>
+                                <span className="flex items-center gap-2 text-xs font-bold text-green-700 bg-green-100 px-3 py-1.5 rounded-full"><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>{asesoresAtendiendo} Atendiendo</span>
                             </div>
                         </div>
 

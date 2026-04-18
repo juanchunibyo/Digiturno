@@ -37,6 +37,12 @@ class AuthenticatedSessionController extends Controller
             return response()->json(['name' => Auth::user()->name]);
         }
 
+        // Leer el rol de la base de datos y redirigir
+        if (Auth::user()->role === 'coordinador') {
+            return redirect()->intended('/dashboard-coordinador');
+        }
+
+        // Si es asesor o cualquier otro, va al dashboard normal
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
