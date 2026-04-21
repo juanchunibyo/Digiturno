@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "outputDirectory": "public",
+  "buildCommand": "npm run build && (curl -sS https://getcomposer.org/installer | php) && ./composer.phar install --no-dev --ignore-platform-reqs",
+  "outputDirectory": ".",
   "functions": {
     "api/index.php": {
       "runtime": "vercel-php@0.9.0",
@@ -10,7 +11,7 @@
   "routes": [
     {
       "src": "/(build|assets|css|js|images|storage|favicon.ico|robots.txt)(.*)",
-      "dest": "/$1$2"
+      "dest": "/public/$1$2"
     },
     {
       "src": "/(.*)",
