@@ -4,7 +4,7 @@
 /public/storage
 /storage/*.key
 /storage/pail
-/vendor
+# /vendor (Comentado para permitir el despliegue en Vercel)
 /.vite
 /dist
 .env

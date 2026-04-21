@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "npm run build && (curl -sS https://getcomposer.org/installer | php) && ./composer.phar install --no-dev --ignore-platform-reqs",
   "outputDirectory": ".",
   "functions": {
     "api/index.php": {
