@@ -1,0 +1,7 @@
+node_modules/
+vendor/
+*.cache
+*.log
+*vitest-temp*
+composer.lock
+phpunit.xml
