@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Edit3, Delete, XCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Edit3, Delete, XCircle, CheckCircle2 } from 'lucide-react';
 
 export default function Registro() {
     const { tipo_poblacion } = usePage().props;
@@ -11,20 +11,123 @@ export default function Registro() {
     const [activeInput, setActiveInput] = useState('docNumber');
     const [processing, setProcessing] = useState(false);
 
+    const [showTurno, setShowTurno] = useState(false);
+    const [generatedTurn, setGeneratedTurn] = useState({ numero: '', tipo: '', hora: '' });
+
     const handleGenerarTurno = () => {
         if (docNumber.length < 6 || processing) return;
         setProcessing(true);
-        router.post(route('turno.generar'), {
-            tipo_documento: docType,
-            documento: docNumber,
-            telefono: phoneNumber || null,
-            tipo: tipo_poblacion || 'General',
-        }, {
-            onError: () => setProcessing(false),
-        });
+        
+        // Simulación de delay de red (500ms)
+        setTimeout(() => {
+            const prefijos = {
+                'General':     'N',
+                'Prioritaria': 'P',
+                'Víctimas':    'V',
+                'Empresa':     'E',
+            };
+            const prefijo = prefijos[tipo_poblacion] || 'N';
+            // Generamos un número aleatorio para el mock para que no siempre sea el mismo
+            const randomNum = Math.floor(Math.random() * 900) + 100;
+            const numero = `${prefijo}-${randomNum}`;
+            const now = new Date();
+            
+            setGeneratedTurn({
+                numero: numero,
+                tipo: tipo_poblacion || 'General',
+                hora: now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true }),
+                fecha: now.toLocaleDateString('es-CO')
+            });
+            setShowTurno(true);
+            setProcessing(false);
+
+            // Reseteo automático después de 30s (igual que en la pantalla real)
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 30000);
+        }, 800);
     };
 
+    if (showTurno) {
+        const tipoConfig = {
+            'General':     { color: '#4B5563', label: 'Atención General'     },
+            'Prioritaria': { color: '#EA580C', label: 'Atención Prioritaria' },
+            'Víctimas':    { color: '#7C3AED', label: 'Atención Víctimas'    },
+            'Empresa':     { color: '#1D4ED8', label: 'Empresa'              },
+        };
+        const cfg = tipoConfig[generatedTurn.tipo] || tipoConfig['General'];
+
+        return (
+            <div className="relative min-h-screen flex flex-col font-['Inter',sans-serif] select-none overflow-hidden bg-[#1B4332]">
+                <Head title="Turno Generado | SENA APE" />
+                <div className="absolute inset-0 z-0">
+                    <img alt="Fondo SENA" className="w-full h-full object-cover" src="/ape-bg.png" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-[#1B4332]/80 to-black/70 backdrop-blur-[4px]" />
+                </div>
+                <header className="relative w-full flex justify-between items-center px-10 py-6 z-20">
+                    <div className="flex items-center bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 shadow-lg">
+                        <img src="/logo-ape.png" alt="SENA APE" className="h-[46px] object-contain brightness-0 invert" />
+                    </div>
+                    <div className="bg-black/40 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10">
+                        <span className="text-[#5ceb00] text-xs font-black uppercase tracking-widest">Turno Generado (Mock Mode)</span>
+                    </div>
+                </header>
+                <main className="flex-1 flex items-center justify-center p-6 relative z-10">
+                    <motion.div
+                        initial={{ scale: 0.85, opacity: 0, y: 40 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        transition={{ type: 'spring', stiffness: 180, damping: 20 }}
+                        className="w-full max-w-2xl bg-white/5 backdrop-blur-3xl border border-white/20 rounded-[40px] shadow-[0_30px_70px_rgba(0,0,0,0.5)] overflow-hidden"
+                    >
+                        <div className="bg-[#39A900] py-8 flex flex-col items-center gap-3">
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}>
+                                <CheckCircle2 size={64} className="text-white drop-shadow-lg" />
+                            </motion.div>
+                            <h1 className="text-white font-black text-2xl uppercase tracking-widest">¡Turno Generado!</h1>
+                            <p className="text-white/80 text-sm font-medium">Su turno ha sido registrado exitosamente</p>
+                        </div>
+                        <div className="flex flex-col items-center py-12 px-10 gap-6">
+                            <p className="text-gray-400 font-black uppercase tracking-[0.4em] text-sm">Su número de turno es</p>
+                            <motion.div
+                                initial={{ scale: 0.5, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ type: 'spring', stiffness: 200, damping: 18, delay: 0.3 }}
+                                className="font-black text-white tracking-tighter leading-none"
+                                style={{ fontSize: '10rem' }}
+                            >
+                                {generatedTurn.numero}
+                            </motion.div>
+                            <span className="text-white font-black uppercase tracking-widest text-sm px-6 py-2 rounded-full" style={{ background: cfg.color }}>{cfg.label}</span>
+                            <div className="w-full grid grid-cols-2 gap-4 mt-4">
+                                <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col gap-1">
+                                    <span className="text-gray-500 text-xs font-black uppercase tracking-widest">Documento</span>
+                                    <span className="text-white font-black text-xl font-mono">{docNumber}</span>
+                                </div>
+                                <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col gap-1">
+                                    <span className="text-gray-500 text-xs font-black uppercase tracking-widest">Hora de registro</span>
+                                    <span className="text-white font-black text-xl">{generatedTurn.hora}</span>
+                                </div>
+                            </div>
+                            <div className="w-full bg-[#39A900]/10 border border-[#39A900]/30 rounded-2xl p-5 text-center mt-2">
+                                <p className="text-[#5ceb00] font-bold text-base leading-relaxed">Por favor espere en sala. Cuando su turno sea llamado en la pantalla, diríjase al módulo indicado.</p>
+                            </div>
+                            <p className="text-gray-600 text-xs font-bold uppercase tracking-widest mt-2">Esta pantalla se reiniciará automáticamente en 30 segundos</p>
+                        </div>
+                    </motion.div>
+                </main>
+                <div className="relative z-20 p-6 bg-black/40 backdrop-blur-xl border-t border-white/10">
+                    <div className="max-w-2xl mx-auto">
+                        <Link href="/" className="w-full py-5 px-10 bg-white/5 text-white rounded-2xl text-xl font-bold flex items-center justify-center gap-4 hover:bg-white/10 border border-white/10 transition-all active:scale-95">
+                            <ArrowLeft size={26} className="text-gray-400" /> Volver al Inicio
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     const handleKeypadPress = (val) => {
+
         if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) window.navigator.vibrate([20]);
         if (activeInput === 'docNumber') {
             if (docNumber.length < 15) setDocNumber(prev => prev + val);
@@ -234,10 +337,10 @@ export default function Registro() {
                 
                 <div className="max-w-7xl mx-auto flex justify-between gap-6 py-2">
                     {/* Botón Volver - Usando a tag para asegurar routing */}
-                    <a href="/seleccion" className="flex-1 py-5 px-10 bg-white/5 text-white rounded-2xl text-xl lg:text-2xl font-bold flex items-center justify-center gap-4 hover:bg-white/10 hover:border-white/30 transition-all active:scale-95 border border-white/10 touch-manipulation z-50 cursor-pointer">
+                    <Link href="/" className="flex-1 py-5 px-10 bg-white/5 text-white rounded-2xl text-xl lg:text-2xl font-bold flex items-center justify-center gap-4 hover:bg-white/10 hover:border-white/30 transition-all active:scale-95 border border-white/10 touch-manipulation z-50 cursor-pointer">
                         <ArrowLeft size={30} className="text-gray-400 pointer-events-none" />
                         <span className="pointer-events-none">Volver al Inicio</span>
-                    </a>
+                    </Link>
                     
                     {/* Botón Generar Turno */}
                     <button

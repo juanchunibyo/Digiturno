@@ -1,26 +1,67 @@
-# Digiturno
+# 🚀 Digiturno - SENA APE Control System
 
-Sistema de gestión de turnos desarrollado con **Laravel**, **Inertia.js** y **React**.
+Sistema de gestión de turnos de alto rendimiento diseñado específicamente para la **Agencia Pública de Empleo (APE) del SENA**. Esta plataforma moderna optimiza la interacción entre buscadores de empleo y asesores mediante una interfaz intuitiva, automatizada y con una estética premium.
 
-## Estado del Desarrollo y Logros Alcanzados
+## 🌟 Características Principales
 
-A lo largo de nuestras sesiones, hemos trabajado en configurar, diseñar y desarrollar el sistema de turnos de manera robusta. Aquí tienes un resumen de todo lo que hemos logrado implementar hasta el momento:
+### 💎 Interfaz de Usuario Premium
+- **Diseño Glassmorphism**: Uso extendido de efectos de cristal, desenfoques y gradientes modernos para una experiencia de usuario de "vanguardia".
+- **Animaciones Cinematográficas**: Integración de **Framer Motion** y **GSAP** para transiciones suaves y estados interactivos que cautivan al usuario.
+- **Teclado Virtual Personalizado**: Formulario de registro con keypad numérico integrado y respuesta táctil para kioscos.
 
-### 1. Desarrollo del Frontend (React + Inertia + Tailwind CSS)
-- **Pantallas principales:** Finalizamos las pantallas de **Bienvenida** y de **Selección de Rol**, asegurándonos de que coincidan con las pautas de diseño específicas establecidas (SENA).
-- **Formulario de Registro y Teclado Virtual:** Implementamos de manera exitosa un formulario de registro interactivo que cuenta con un teclado virtual personalizado en pantalla.
-- **Optimización visual y de rendimiento:** Refinamos las interfaces para garantizar alta velocidad de carga y consistencia directa con los prototipos base.
+### 🤖 Automatización y Flujo de Atención
+- **Asesor Inteligente**: El dashboard del asesor elimina pasos redundantes. El llamado de turnos es automático al finalizar la atención previa.
+- **Mock Mode**: El frontend está desacoplado de la base de datos para permitir desarrollo rápido de UI sin depender de conexiones activas.
+- **Roles Definidos**: Separación clara entre **Asesores** (atención directa) y **Coordinadores** (supervisión global).
 
-### 2. Diseño Inteligente y Generación UI (Stitch MCP)
-- Nos conectamos y verificamos la comunicación con el servidor **Stitch MCP**.
-- Interactuamos con el proyecto para generar, editar y generar variaciones inteligentes del diseño y las pantallas a aplicar en la plataforma, basándonos en los prototipos.
-
-### 3. Arquitectura y Enrutamiento Backend
-- Estudiamos a profundidad el funcionamiento y estructura de la carpeta `routes` de Laravel, lo que permitió comprender y configurar de la mejor manera toda la navegación, endpoints y estructura de URLs dentro del proyecto.
-
-### 4. Configuración del Entorno de Servicios
-- **Solución de Dependencias:** Identificamos y solucionamos el requerimiento de Composer para ejecutar el proyecto en su versión requerida de PHP (8.3).
-- **Despliegue Local:** Levantamos correctamente el entorno habilitando en segundo plano y a la vez tanto el backend de Artisan de Laravel como el servidor de dependencias por Vite de React.
+### 🛠️ Tecnología de Punta
+- **Frontend**: React 18 con Inertia.js (Single Page Application experience).
+- **Styling**: Tailwind CSS con fuentes modernas (Inter & Poppins).
+- **Backend**: Laravel 11/12 proporcionando una API robusta y segura.
+- **Iconografía**: Lucide React para una interfaz limpia y semántica.
 
 ---
-*Servidores activos localmente (`php artisan serve` y `npm run dev`)*
+
+## 🚀 Logros del Proyecto
+
+### 1. Modernización de Componentes
+- Reconstrucción total de las pantallas de **Bienvenida**, **Selección de Población** y **Registro**.
+- Implementación de lógica de redirección inteligente hacia el "Welcome" al finalizar cada proceso.
+
+### 2. Optimización del Dashboard del Asesor
+- Eliminación del botón manual "Siguiente Turno".
+- Implementación de **Llamado Automático** (400ms tras asignación).
+- Animaciones de éxito mediante **Lottie Player** para confirmación visual de tareas completadas.
+
+### 3. Gestión de Datos y Consistencia
+- Normalización de etiquetas de atención: *Atención Prioritaria*, *Empresa*, *Población General* y *Víctimas*.
+- Refactorización del modelo de Usuario para máxima visibilidad de roles (Asesor vs Coordinador).
+
+---
+
+## 🛠️ Instalación y Desarrollo
+
+1. **Clonar el repositorio:**
+   ```bash
+   git clone [url-del-repo]
+   ```
+
+2. **Instalar dependencias:**
+   ```bash
+   composer install
+   npm install
+   ```
+
+3. **Configurar entorno:**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+4. **Ejecutar en desarrollo:**
+   ```bash
+   npm run dev
+   ```
+
+---
+*Desarrollado con ❤️ para el talento colombiano en el SENA.*

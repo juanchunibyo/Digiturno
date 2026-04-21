@@ -8,13 +8,13 @@ export default function TurnoGenerado({ turno_numero, tipo, hora, fecha, documen
         'General':     { color: '#4B5563', label: 'Atención General'     },
         'Prioritaria': { color: '#EA580C', label: 'Atención Prioritaria' },
         'Víctimas':    { color: '#7C3AED', label: 'Atención Víctimas'    },
-        'Empresa':     { color: '#1D4ED8', label: 'Atención Empresa'     },
+        'Empresa':     { color: '#1D4ED8', label: 'Empresa'              },
     };
     const cfg = tipoConfig[tipo] || tipoConfig['General'];
 
     // Auto-redirigir al inicio después de 30 segundos
     useEffect(() => {
-        const t = setTimeout(() => { window.location.href = '/seleccion'; }, 30000);
+        const t = setTimeout(() => { window.location.href = '/'; }, 30000);
         return () => clearTimeout(t);
     }, []);
 
@@ -112,7 +112,7 @@ export default function TurnoGenerado({ turno_numero, tipo, hora, fecha, documen
             <div className="relative z-20 p-6 bg-black/40 backdrop-blur-xl border-t border-white/10">
                 <div className="max-w-2xl mx-auto">
                     <Link
-                        href="/seleccion"
+                        href="/"
                         className="w-full py-5 px-10 bg-white/5 text-white rounded-2xl text-xl font-bold flex items-center justify-center gap-4 hover:bg-white/10 border border-white/10 transition-all active:scale-95"
                     >
                         <ArrowLeft size={26} className="text-gray-400" />

@@ -26,90 +26,41 @@ Route::get('/registro', function () {
 Route::post('/turno/generar', [\App\Http\Controllers\TurnoController::class, 'store'])->name('turno.generar');
 
 // ============================================================
-//  API JSON para la Pantalla de Turnos (polling)
+//  API JSON para la Pantalla de Turnos (MOCK)
 // ============================================================
 Route::get('/pantalla/turnos', function () {
-    // Todos los turnos "En Curso" (puede haber varios asesores atendiendo a la vez)
-    $enCurso = DB::table('atenciones')
-        ->join('turnos', 'atenciones.turno_id', '=', 'turnos.id')
-        ->join('asesores', 'atenciones.asesor_id', '=', 'asesores.id')
-        ->where('atenciones.estado', 'En Curso')
-        ->orderBy('atenciones.id', 'desc')
-        ->select('turnos.id','turnos.turno_numero','turnos.tipo','asesores.taquilla','atenciones.estado')
-        ->first();
-
-    // Historial reciente (últimos 4 completados/no asistió)
-    $historial = DB::table('atenciones')
-        ->join('turnos', 'atenciones.turno_id', '=', 'turnos.id')
-        ->join('asesores', 'atenciones.asesor_id', '=', 'asesores.id')
-        ->whereIn('atenciones.estado', ['Completado', 'No Asistió'])
-        ->whereDate('atenciones.created_at', today())
-        ->orderBy('atenciones.id', 'desc')
-        ->limit(4)
-        ->select('turnos.id','turnos.turno_numero','turnos.tipo','asesores.taquilla','atenciones.estado')
-        ->get()
-        ->map(fn($t) => [
-            'id'      => $t->id,
-            'turno'   => $t->turno_numero,
-            'tipo'    => $t->tipo,
-            'taquilla'=> $t->taquilla,
-            'estado'  => $t->estado,
-        ])
-        ->values()
-        ->toArray();
-
     return response()->json([
-        'actual' => $enCurso ? [
-            'id'      => $enCurso->id,
-            'turno'   => $enCurso->turno_numero,
-            'tipo'    => $enCurso->tipo,
-            'taquilla'=> $enCurso->taquilla,
-            'estado'  => $enCurso->estado,
-        ] : null,
-        'historial' => $historial,
+        'actual' => [
+            'id'       => 999,
+            'turno'    => 'N-042',
+            'tipo'     => 'General',
+            'taquilla' => 'Taquilla 01',
+            'estado'   => 'En Curso',
+        ],
+        'historial' => [
+            ['id' => 998, 'turno' => 'P-018', 'tipo' => 'Prioritaria', 'taquilla' => 'Taquilla 03', 'estado' => 'Completado'],
+            ['id' => 997, 'turno' => 'E-004', 'tipo' => 'Empresa', 'taquilla' => 'Taquilla 02', 'estado' => 'Completado'],
+            ['id' => 996, 'turno' => 'N-039', 'tipo' => 'General', 'taquilla' => 'Taquilla 05', 'estado' => 'No Asistió'],
+        ],
     ]);
 });
 
 // ============================================================
-//  Pantalla de Turnos (vista Inertia)
+//  Pantalla de Turnos (vista Inertia MOCK)
 // ============================================================
 Route::get('/pantalla', function () {
-    $enCurso = DB::table('atenciones')
-        ->join('turnos', 'atenciones.turno_id', '=', 'turnos.id')
-        ->join('asesores', 'atenciones.asesor_id', '=', 'asesores.id')
-        ->where('atenciones.estado', 'En Curso')
-        ->orderBy('atenciones.id', 'desc')
-        ->select('turnos.id','turnos.turno_numero','turnos.tipo','asesores.taquilla','atenciones.estado')
-        ->first();
-
-    $historial = DB::table('atenciones')
-        ->join('turnos', 'atenciones.turno_id', '=', 'turnos.id')
-        ->join('asesores', 'atenciones.asesor_id', '=', 'asesores.id')
-        ->whereIn('atenciones.estado', ['Completado', 'No Asistió'])
-        ->whereDate('atenciones.created_at', today())
-        ->orderBy('atenciones.id', 'desc')
-        ->limit(4)
-        ->select('turnos.id','turnos.turno_numero','turnos.tipo','asesores.taquilla','atenciones.estado')
-        ->get()
-        ->map(fn($t) => [
-            'id'      => $t->id,
-            'turno'   => $t->turno_numero,
-            'tipo'    => $t->tipo,
-            'taquilla'=> $t->taquilla,
-            'estado'  => $t->estado,
-        ])
-        ->values()
-        ->toArray();
-
     return Inertia::render('PantallaTurnos', [
-        'turnoActualInicial' => $enCurso ? [
-            'id'      => $enCurso->id,
-            'turno'   => $enCurso->turno_numero,
-            'tipo'    => $enCurso->tipo,
-            'taquilla'=> $enCurso->taquilla,
-            'estado'  => $enCurso->estado,
-        ] : null,
-        'historialInicial' => $historial,
+        'turnoActualInicial' => [
+            'id'       => 999,
+            'turno'    => 'N-042',
+            'tipo'     => 'General',
+            'taquilla' => 'Taquilla 01',
+            'estado'   => 'En Curso',
+        ],
+        'historialInicial' => [
+            ['id' => 998, 'turno' => 'P-018', 'tipo' => 'Prioritaria', 'taquilla' => 'Taquilla 03', 'estado' => 'Completado'],
+            ['id' => 997, 'turno' => 'E-004', 'tipo' => 'Empresa', 'taquilla' => 'Taquilla 02', 'estado' => 'Completado'],
+        ],
     ]);
 });
 

@@ -13,7 +13,7 @@ export default function SeleccionPoblacion() {
             link: "/registro?tipo=Víctimas"
         },
         {
-            title: "Población Prioridad",
+            title: "Atención Prioritaria",
             desc: "Adultos mayores, personas con discapacidad o mujeres gestantes.",
             icon: Accessibility,
             link: "/registro?tipo=Prioritaria"
@@ -25,7 +25,7 @@ export default function SeleccionPoblacion() {
             link: "/registro?tipo=General"
         },
         {
-            title: "Atención Empresas",
+            title: "Empresa",
             desc: "Gestión de vacantes y apoyo corporativo para empleadores.",
             icon: Building2,
             link: "/registro?tipo=Empresa"
