@@ -4,12 +4,13 @@
   "functions": {
     "api/index.php": {
       "runtime": "vercel-php@0.9.0",
-      "includeFiles": "vendor/**,app/**,config/**,bootstrap/**,routes/**,storage/**,database/**"
+      "includeFiles": "vendor/**,app/**,config/**,bootstrap/**,routes/**,storage/**,database/**,public/**"
     }
   },
   "routes": [
     {
-      "handle": "filesystem"
+      "src": "/(build|assets|css|js|images|storage|favicon.ico|robots.txt)(.*)",
+      "dest": "/$1$2"
     },
     {
       "src": "/(.*)",
