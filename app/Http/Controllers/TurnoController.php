@@ -34,36 +34,80 @@ class TurnoController extends Controller
             $personaId = $persona->id;
         }
 
-        // 2. Solicitante
-        $solicitanteId = DB::table('solicitantes')->insertGetId([
-            'persona_id'       => $personaId,
-            'tipo_solicitante' => $request->tipo,
-            'created_at'       => now(),
-            'updated_at'       => now(),
-        ]);
+        // Usamos transacción para evitar que dos personas obtengan el mismo número al mismo tiempo
+        $numero = DB::transaction(function () use ($request, $personaId) {
+            // 1. Solicitante
+            $solicitanteId = DB::table('solicitantes')->insertGetId([
+                'persona_id'       => $personaId,
+                'tipo_solicitante' => $request->tipo,
+                'created_at'       => now(),
+                'updated_at'       => now(),
+            ]);
 
-        // 3. Número de turno: prefijo + correlativo del día
-        $prefijos = [
-            'General'     => 'N',
-            'Prioritaria' => 'P',
-            'Víctimas'    => 'V',
-            'Empresa'     => 'E',
-        ];
-        $prefijo = $prefijos[$request->tipo] ?? 'N';
-        $count   = DB::table('turnos')->whereDate('created_at', today())->count() + 1;
-        $numero  = $prefijo . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+            // 2. Generar número único
+            $prefijos = [
+                'General'     => 'G',
+                'Prioritaria' => 'P',
+                'Víctimas'    => 'V',
+                'Empresa'     => 'E',
+            ];
+            $prefijo = $prefijos[$request->tipo] ?? 'G';
+            
+            // Bloqueamos la tabla para que nadie más cuente mientras generamos el número
+            $count = DB::table('turnos')
+                ->whereDate('created_at', today())
+                ->where('tipo', $request->tipo)
+                ->lockForUpdate()
+                ->count() + 1;
+                
+            $numero = $prefijo . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
 
-        // 4. Turno
-        DB::table('turnos')->insert([
-            'solicitante_id' => $solicitanteId,
-            'turno_numero'   => $numero,
-            'tipo'           => $request->tipo,
-            'hora_fecha'     => now(),
-            'created_at'     => now(),
-            'updated_at'     => now(),
-        ]);
+            // 3. Crear Turno
+            $turnoId = DB::table('turnos')->insertGetId([
+                'solicitante_id' => $solicitanteId,
+                'turno_numero'   => $numero,
+                'tipo'           => $request->tipo,
+                'hora_fecha'     => now(),
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ]);
 
-        return Inertia::render('TurnoGenerado', [
+            // 4. ASIGNACIÓN AUTOMÁTICA (El asesor nunca llama)
+            // Buscamos un asesor disponible que sea compatible con el tipo de turno y que esté ONLINE (actividad reciente < 20s)
+            $queryAsesor = DB::table('asesores')
+                ->leftJoin('atenciones', function($join) {
+                    $join->on('asesores.id', '=', 'atenciones.asesor_id')
+                         ->whereIn('atenciones.estado', ['Llamando', 'En Curso']);
+                })
+                ->whereNull('atenciones.id')
+                ->whereRaw('TIMESTAMPDIFF(SECOND, asesores.last_activity, NOW()) < 20');
+
+            // Si el turno es especializado (ej: Víctimas), buscamos un asesor de ese tipo
+            if ($request->tipo !== 'General') {
+                $queryAsesor->where('asesores.tipo_asesor', $request->tipo);
+            } else {
+                // Si el turno es General, buscamos un asesor General
+                $queryAsesor->where('asesores.tipo_asesor', 'General');
+            }
+
+            $asesorDisponible = $queryAsesor->select('asesores.id')->first();
+
+            if ($asesorDisponible) {
+                DB::table('atenciones')->insert([
+                    'turno_id'    => $turnoId,
+                    'asesor_id'   => $asesorDisponible->id,
+                    'tipo'        => $request->tipo,
+                    'hora_inicio' => now(),
+                    'estado'      => 'Llamando',
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
+            }
+
+            return $numero;
+        });
+
+        return response()->json([
             'turno_numero' => $numero,
             'tipo'         => $request->tipo,
             'hora'         => now()->format('h:i A'),

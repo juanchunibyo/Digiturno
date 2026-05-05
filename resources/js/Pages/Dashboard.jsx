@@ -1,500 +1,568 @@
 import React, { useState, useEffect } from 'react';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DotLottiePlayer } from '@dotlottie/react-player';
-import {
+import { 
     LogOut, Timer, ChevronRight, Ban, CheckCircle2, AlertTriangle,
-    ClipboardList, Clock, PhoneCall, UserCheck, MessageSquare, XCircle, PauseCircle, Check, Edit3, ArrowRight
+    ClipboardList, Clock, PhoneCall, UserCheck, MessageSquare, XCircle, 
+    PauseCircle, Check, Edit3, ArrowRight, User, Users, FileText, Zap
 } from 'lucide-react';
 
-// --- Datos mock ---
-const initialQueue = [
-    { id: 't-042', turn: 'P-042', doc: '1.023.456.678', docType: 'C.C.', timeWait: '0 min', type: 'Atención Prioritaria', typeColor: 'bg-red-700', service: 'Prioritaria' },
-    { id: 't-044', turn: 'E-044', doc: '900.123.456-1', docType: 'NIT', timeWait: '25 min', type: 'Atención Empresa', typeColor: 'bg-blue-700', service: 'Empresa' },
-    { id: 't-046', turn: 'G-046', doc: '1.020.884.111', docType: 'C.C.', timeWait: '40 min', type: 'Atención General', typeColor: 'bg-gray-700', service: 'General' },
-    { id: 't-047', turn: 'G-047', doc: '1.098.765.432', docType: 'T.I.', timeWait: '45 min', type: 'Atención General', typeColor: 'bg-gray-700', service: 'General' },
-    { id: 't-048', turn: 'E-048', doc: '800.555.444-2', docType: 'NIT', timeWait: '50 min', type: 'Atención Empresa', typeColor: 'bg-blue-700', service: 'Empresa' },
-    { id: 't-050', turn: 'G-050', doc: '123.456.789', docType: 'PEP', timeWait: '60 min', type: 'Atención General', typeColor: 'bg-gray-700', service: 'General' }
-];
-
-const HISTORY = [
-    { turn: 'N-041', doc: '1.034.225.732', type: 'Normal', typeDetails: 'Empresa: SENA', duration: '14:22', obs: 'CV revisada', status: 'COMPLETADO', statusColor: 'bg-green-100 text-green-700' },
-    { turn: 'N-040', doc: '1.085.118.112', type: 'Empresa', typeDetails: 'Inversiones del Caribe', duration: '--', obs: '--', status: 'NO ASISTIÓ', statusColor: 'bg-red-100 text-red-700' },
-    { turn: 'N-039', doc: '1.085.457.999', type: 'Prioritaria', typeDetails: '--', duration: '28:10', obs: 'Orientación de carrera', status: 'COMPLETADO', statusColor: 'bg-green-100 text-green-700' },
-];
+// --- Mapeo de Colores ---
+const getTipoStyles = (tipo) => {
+    const t = tipo?.toLowerCase() || '';
+    if (t.includes('priorit') || t.includes('víctima')) return { 
+        bg: 'bg-red-500', text: 'text-white', lightBg: 'bg-red-50', border: 'border-red-500', textColor: 'text-red-500' 
+    };
+    if (t.includes('empresa')) return { 
+        bg: 'bg-blue-600', text: 'text-white', lightBg: 'bg-blue-50', border: 'border-blue-600', textColor: 'text-blue-600' 
+    };
+    if (t.includes('interna') || t.includes('sena')) return { 
+        bg: 'bg-green-600', text: 'text-white', lightBg: 'bg-green-50', border: 'border-green-600', textColor: 'text-green-600' 
+    };
+    return { 
+        bg: 'bg-slate-700', text: 'text-white', lightBg: 'bg-slate-50', border: 'border-slate-700', textColor: 'text-slate-700' 
+    };
+};
 
 const STEP_DEFS = [
-    { key: 'llamado',     label: 'Llamado',    Icon: PhoneCall },
-    { key: 'checkin',     label: 'Check-in',   Icon: UserCheck },
-    { key: 'consultoria', label: 'Consultoría', Icon: MessageSquare },
-    { key: 'cierre',      label: 'Cierre',     Icon: XCircle },
+    { id: 1, key: 'llamado', label: 'Llamado', Icon: PhoneCall },
+    { id: 2, key: 'checkin', label: 'Check-in', Icon: UserCheck },
+    { id: 3, key: 'consultoria', label: 'Consultoría', Icon: MessageSquare },
+    { id: 4, key: 'cierre', label: 'Cierre', Icon: XCircle },
 ];
 
-function useTimer() {
+export default function Dashboard() {
+    const { auth, turnosEnEspera, atencionActiva, statsHoy, asesor, mensajeCoordinador } = usePage().props;
+    const user = auth.user;
+    
     const [seconds, setSeconds] = useState(0);
     const [running, setRunning] = useState(false);
-
-    useEffect(() => {
-        if (!running) return;
-        const id = setInterval(() => setSeconds(s => s + 1), 1000);
-        return () => clearInterval(id);
-    }, [running]);
-
-    const start = () => { setSeconds(0); setRunning(true); };
-    const stop  = () => setRunning(false);
-    const reset = () => { setSeconds(0); setRunning(false); };
-    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-    const s = String(seconds % 60).padStart(2, '0');
-    const display = `${m}:${s}`;
-    return { display, running, start, stop, reset, seconds };
-}
-
-export default function Dashboard({ auth }) {
-    const user = auth.user;
-    const { display: elapsed, running: timerRunning, start: startTimer, stop: stopTimer, reset: resetTimer } = useTimer();
-
-    const [queueItems, setQueueItems] = useState(initialQueue.slice(1));
-    const [activeTurn, setActiveTurn] = useState(initialQueue[0]);
-    const [historyItems, setHistoryItems] = useState(HISTORY);
-    
-    const [steps, setSteps] = useState({ llamado: null, checkin: null, consultoria: null, cierre: null });
-    const [isPaused, setIsPaused] = useState(false);
-    const [observaciones, setObservaciones] = useState('');
+    const [activeTurn, setActiveTurn] = useState(atencionActiva ? {
+        id: atencionActiva.id,
+        turn: atencionActiva.turno_numero,
+        doc: atencionActiva.documento,
+        type: atencionActiva.tipo
+    } : null);
+    const [queueItems, setQueueItems] = useState(turnosEnEspera || []);
+    const [currentStep, setCurrentStep] = useState(atencionActiva ? 'checkin' : 'llamado');
+    const [observaciones, setObservaciones] = useState(atencionActiva?.observaciones || '');
+    const [callCount, setCallCount] = useState(0);
     const [showSuccessAnim, setShowSuccessAnim] = useState(false);
 
-    const nowTime = () => new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-
-    const avanzaTurnoAnimate = (estado) => {
-        setIsPaused(false);
-        stopTimer();
-        
-        if (activeTurn) {
-            const newHistory = {
-                turn: activeTurn.turn,
-                doc: activeTurn.doc,
-                type: activeTurn.type.replace('Atención ', ''),
-                typeDetails: activeTurn.service,
-                duration: elapsed,
-                obs: observaciones || '--',
-                status: estado,
-                statusColor: estado === 'COMPLETADO' ? 'bg-green-100 text-green-700' : (estado === 'NO ASISTIÓ' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700')
-            };
-            setHistoryItems(prev => [newHistory, ...prev]);
-        }
-
-        setSteps({ llamado: null, checkin: null, consultoria: null, cierre: null });
-        setObservaciones('');
-        resetTimer();
-
-        if (queueItems.length > 0) {
-            const nextTurn = queueItems[0];
-            setActiveTurn(nextTurn);
-            setQueueItems(prev => prev.slice(1));
-        } else {
-            setActiveTurn(null);
-        }
-    };
-
-    const handleSiguienteTurnoManual = () => {
-        avanzaTurnoAnimate('ASIGNADO/OTRO');
-    };
-
-    const handleNoAsistio = () => {
-        avanzaTurnoAnimate('NO ASISTIÓ');
-    };
+    // Reiniciar conteo cuando cambia el turno
+    useEffect(() => {
+        setCallCount(0);
+    }, [activeTurn?.id]);
 
     useEffect(() => {
-        if (steps.consultoria && !steps.cierre && !timerRunning && !isPaused && !showSuccessAnim) {
-            startTimer();
-        } else if ((!steps.consultoria || steps.cierre || isPaused || showSuccessAnim) && timerRunning) {
-            stopTimer();
+        let id;
+        if (running && currentStep === 'consultoria') {
+            id = setInterval(() => setSeconds(s => s + 1), 1000);
         }
-    }, [steps.consultoria, steps.cierre, timerRunning, isPaused, showSuccessAnim, startTimer, stopTimer]);
+        return () => clearInterval(id);
+    }, [running, currentStep]);
 
-    const handleStepAuto = (key) => {
-        const order = ['llamado', 'checkin', 'consultoria', 'cierre'];
-        const idx = order.indexOf(key);
-        setSteps(current => {
-            const next = { ...current };
-            for(let i=0; i<=idx; i++) {
-                if(!next[order[i]]) next[order[i]] = nowTime();
+    // Lógica de Re-Llamado Automático (cada 15s si está en paso 'llamado')
+    useEffect(() => {
+        let recallTimer;
+        if (activeTurn && currentStep === 'llamado') {
+            if (callCount >= 9) { // 1 llamada inicial + 9 rellamados = 10 llamados máximos
+                router.post(route('asesor.finalizar'), { 
+                    observaciones: 'Sistema: Cancelado automáticamente tras 10 llamados sin respuesta.',
+                    estado: 'No Asistió' 
+                }, {
+                    onSuccess: () => {
+                        setCallCount(0);
+                        setSeconds(0);
+                        setActiveTurn(null);
+                        setRunning(false);
+                        setObservaciones('');
+                        setCurrentStep('llamado');
+                    }
+                });
+            } else {
+                recallTimer = setInterval(() => {
+                    router.post(route('asesor.rellamar'), { atencion_id: activeTurn.id }, {
+                        preserveScroll: true,
+                        preserveState: true,
+                    });
+                    setCallCount(prev => prev + 1);
+                }, 15000); // 15 segundos
             }
-            return next;
+        }
+        return () => clearInterval(recallTimer);
+    }, [activeTurn, currentStep, callCount]);
+
+    // Polling constante para actualizar "last_activity" y detectar asignaciones
+    useEffect(() => {
+        const interval = setInterval(() => {
+            // Recargamos datos de la atención y la cola. 
+            // Si hay un turno activo, solo actualizamos estadísticas y cola.
+            router.reload({ 
+                only: ['atencionActiva', 'turnosEnEspera', 'statsHoy', 'mensajeCoordinador'],
+                preserveScroll: true,
+                preserveState: true
+            });
+        }, 5000); // Cada 5 segundos para mantener el "Online" fluido
+        return () => clearInterval(interval);
+    }, []);
+
+    // Sincronizar estado cuando llega una atención desde el servidor (Auto o Coordinador)
+    useEffect(() => {
+        if (atencionActiva) {
+            setActiveTurn({
+                id: atencionActiva.id,
+                turn: atencionActiva.turno_numero,
+                doc: atencionActiva.documento,
+                type: atencionActiva.tipo
+            });
+            
+            // Si el estado es 'Llamando', el paso es 'llamado'
+            // Si el estado es 'En Curso', el paso es 'consultoria'
+            if (atencionActiva.estado === 'Llamando') {
+                setCurrentStep('llamado');
+                setRunning(false); // El cronómetro no corre en llamado
+            } else if (atencionActiva.estado === 'En Curso') {
+                setCurrentStep('consultoria');
+                setRunning(true); // El cronómetro corre en consultoría
+            }
+        } else {
+            setActiveTurn(null);
+            setRunning(false);
+            setCurrentStep('llamado');
+            setSeconds(0);
+        }
+    }, [atencionActiva]);
+
+    // Sincronizar cola de espera con los datos del servidor (Polling)
+    useEffect(() => {
+        setQueueItems(turnosEnEspera || []);
+    }, [turnosEnEspera]);
+
+    const handleCheckIn = () => {
+        router.post(route('asesor.checkin'), { atencion_id: activeTurn.id }, {
+            onSuccess: () => {
+                setCurrentStep('consultoria');
+                setRunning(true);
+            }
         });
     };
 
-    const handleStep = (key) => {
-        if (steps[key]) return;
-        handleStepAuto(key);
+    const formatTime = (s) => {
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
     };
 
-    // 1. Llamado automático al cargar el turno
-    useEffect(() => {
-        if (activeTurn && !steps.llamado && !isPaused) {
-            const t = setTimeout(() => handleStepAuto('llamado'), 400);
-            return () => clearTimeout(t);
-        }
-    }, [activeTurn, steps.llamado, isPaused]);
-
-    // 2. Consultoría y check-in automáticos al escribir observaciones
-    useEffect(() => {
-        if (observaciones.length > 0 && !steps.consultoria) {
-            handleStepAuto('consultoria');
-        }
-    }, [observaciones, steps.consultoria]);
-
-    const disableSiguiente = (!!steps.llamado && !steps.cierre) || isPaused || showSuccessAnim;
-    const disableNoAsistio = !!steps.checkin || !steps.llamado || isPaused || showSuccessAnim;
-    const disableDescansoBtn = !!steps.llamado && !steps.cierre || showSuccessAnim;
-    const disableFinalizar = !steps.consultoria || showSuccessAnim; // Solo habilitado desde la etapa de Consultoría
+    const handleLlamar = (item) => {
+        router.post(route('asesor.llamar'), { turno_id: item.id }, {
+            onSuccess: () => {
+                setActiveTurn(item);
+                setQueueItems(prev => prev.filter(i => i.id !== item.id));
+                setCurrentStep('checkin');
+                setRunning(true);
+            }
+        });
+    };
 
     const handleFinalizar = () => {
-        if (!steps.cierre) {
-            handleStepAuto('cierre');
-        }
         setShowSuccessAnim(true);
-        stopTimer();
         
+        // Simular un pequeño delay para que se aprecie la animación (estilo Nequi)
         setTimeout(() => {
-            avanzaTurnoAnimate('COMPLETADO');
-            setShowSuccessAnim(false);
-        }, 2200); // Duración de la animación lottie aprox
+            router.post(route('asesor.finalizar'), { 
+                observaciones,
+                estado: 'Completado' 
+            }, {
+                onSuccess: () => {
+                    setSeconds(0);
+                    setActiveTurn(null);
+                    setRunning(false);
+                    setObservaciones('');
+                    setCurrentStep('llamado');
+                    setShowSuccessAnim(false);
+                },
+                onError: () => {
+                    setShowSuccessAnim(false);
+                }
+            });
+        }, 1500);
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#F4F6F9] font-['Inter',sans-serif] text-gray-800 overflow-hidden" style={{ fontSize: 'clamp(14px, 1vw, 18px)' }}>
-            <Head><title>Control Center | SENA APE</title></Head>
+        <div className="min-h-screen bg-gradient-to-br from-[#F0F4F8] via-white to-[#E6FFFA] text-[#2D3748] font-['Inter',sans-serif] flex flex-col">
+            <Head title="SENA APE Control Center" />
 
-            {/* HEADER */}
-            <header className="h-[5.5rem] bg-white shadow-sm flex items-center justify-between px-8 shrink-0 relative z-10 w-full">
+            <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 shadow-sm shrink-0">
                 <div className="flex items-center gap-6">
-                    <img src="/logo-ape.png" alt="SENA APE" className="h-12 object-contain" />
-                    <div className="hidden sm:block border-l-2 border-gray-200 pl-6">
-                        <p className="text-[#0B3D2E] font-black text-base leading-none">SENA APE</p>
-                        <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Control Center</p>
+                    <img src="/logo-ape.png" alt="SENA" className="h-10" />
+                    <div className="border-l border-gray-200 h-8 mx-2" />
+                    <div>
+                        <h1 className="text-[12px] font-black text-[#39A900] uppercase tracking-widest leading-none">SENA APE</h1>
+                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">Control Center</p>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-6">
-                    <Link href={route('logout')} method="post" as="button" className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Cerrar Sesión">
-                        <LogOut size={24} />
+                    <Link href={route('logout')} method="post" as="button" className="text-gray-400 hover:text-red-500 transition-colors">
+                        <LogOut size={20} />
                     </Link>
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-[#39A900] text-white flex items-center justify-center text-lg font-black shadow-md">
-                            {user?.name?.charAt(0).toUpperCase() || 'C'}
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-[#39A900] text-white flex items-center justify-center text-sm font-black shadow-md">
+                            {user?.name?.charAt(0).toUpperCase() || 'F'}
                         </div>
-                        <div className="hidden sm:block text-right">
-                            <p className="text-base font-bold text-gray-800 leading-none">{user?.name || 'carlos vilagran'}</p>
-                            <p className="text-xs text-gray-500 mt-1">Sede Central</p>
+                        <div className="text-right">
+                            <p className="text-[12px] font-black text-gray-800 leading-none">{user?.name || 'Usuario'}</p>
+                            <p className="text-[10px] text-[#39A900] font-bold mt-1 uppercase tracking-wider">{asesor?.taquilla || 'Sin Módulo'}</p>
                         </div>
                     </div>
                 </div>
             </header>
+            <AnimatePresence>
+                {mensajeCoordinador && (
+                    <motion.div 
+                        initial={{ y: -50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -50, opacity: 0 }}
+                        className="mx-8 mt-6 p-4 bg-gradient-to-r from-[#39A900] to-[#2D8000] text-white rounded-2xl shadow-lg flex items-center justify-between gap-4 border border-white/20 relative overflow-hidden"
+                    >
+                        <div className="flex items-center gap-3 relative z-10">
+                            <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+                                <MessageSquare size={20} />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest opacity-80 leading-none mb-1">Instrucción del Coordinador</p>
+                                <p className="text-sm font-bold tracking-tight">{mensajeCoordinador}</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => router.post(route('asesor.limpiar-mensaje'))}
+                            className="p-2 hover:bg-white/10 rounded-lg transition-colors relative z-10"
+                        >
+                            <Check size={20} />
+                        </button>
+                        <motion.div 
+                            animate={{ x: ['-100%', '100%'] }}
+                            transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-            <main className="flex-1 overflow-x-hidden overflow-y-auto w-full p-6 lg:p-8 2xl:p-12 flex flex-col gap-8">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-                    {/* COLUMNA 1: En Espera */}
-                    <div className="lg:col-span-3 flex flex-col gap-5">
-                        <h2 className="text-2xl lg:text-3xl font-bold text-gray-800 tracking-tight">En Espera</h2>
-                        
-                        <div className="flex flex-col gap-4 relative">
-                            <AnimatePresence>
-                                {queueItems.map((item) => (
+            <main className="flex-1 p-6 grid grid-cols-12 gap-8 overflow-hidden">
+                <aside className="col-span-12 lg:col-span-3 flex flex-col gap-4">
+                    <h2 className="text-xl font-black text-[#1A202C] mb-2 tracking-tight flex items-center gap-2">
+                        <Users size={20} className="text-[#39A900]" />
+                        En Espera
+                    </h2>
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                        <AnimatePresence mode='popLayout'>
+                            {(queueItems || []).map((item, idx) => {
+                                const styles = getTipoStyles(item.type || item.tipo);
+                                return (
                                     <motion.div 
-                                        layoutId={item.id} 
-                                        key={item.id} 
-                                        initial={{ opacity: 0, y: 50 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, scale: 0.8 }}
-                                        transition={{ type: "spring", bounce: 0.2, duration: 0.8 }}
-                                        className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm relative overflow-hidden group">
-                                        <div className="flex justify-between items-start mb-3">
+                                        key={item.id}
+                                        initial={{ x: -20, opacity: 0 }}
+                                        animate={{ x: 0, opacity: 1 }}
+                                        exit={{ x: -50, opacity: 0 }}
+                                        transition={{ delay: idx * 0.05 }}
+                                        className={`rounded-xl p-5 border-l-8 shadow-sm relative group hover:shadow-md transition-all cursor-default ${styles.lightBg} ${styles.border}`}
+                                    >
+                                        <div className="flex justify-between items-start">
                                             <div>
-                                                <h3 className="text-[clamp(1.5rem,2.5vw,2.5rem)] font-black text-gray-800 leading-none mb-1">{item.turn}</h3>
-                                                <p className="text-[clamp(1rem,1.2vw,1.2rem)] font-bold text-gray-600 font-mono tracking-wider">{item.docType}: {item.doc}</p>
+                                                <h3 className="text-2xl font-black text-gray-800 tracking-tighter leading-none">{item.turn}</h3>
+                                                <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest">{item.type || item.tipo}</p>
                                             </div>
-                                            <div className={`px-3 py-1.5 rounded-xl ${item.typeColor} text-white flex flex-col items-center justify-center min-w-[100px] text-center`}>
-                                                <span className="text-[10px] font-bold leading-tight uppercase">{item.type}</span>
-                                            </div>
+                                            <div className={`w-3 h-3 rounded-full ${styles.bg} animate-pulse`} />
                                         </div>
-                                        <div className="flex justify-between items-end mt-4">
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">En espera: {item.timeWait}</p>
-                                            </div>
-                                            <div className="flex flex-col items-center text-gray-400">
-                                                <ClipboardList size={22} />
-                                                <span className="text-[10px] font-bold mt-1 text-center leading-none">Formulario<br/>Revisado</span>
+                                        <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">ID: {item.doc}</p>
+                                            <div className="text-[10px] text-[#39A900] font-black uppercase tracking-tighter flex items-center gap-1">
+                                                En espera
                                             </div>
                                         </div>
                                     </motion.div>
-                                ))}
-                            </AnimatePresence>
-                            {queueItems.length === 0 && (
-                                <div className="text-center py-10 opacity-50">
-                                    <CheckCircle2 size={48} className="mx-auto mb-4 text-gray-400" />
-                                    <p className="font-bold text-xl text-gray-500">Sin ciudadanos en fila</p>
-                                </div>
-                            )}
-                        </div>
+                                );
+                            })}
+                        </AnimatePresence>
                     </div>
+                </aside>
 
-                    {/* COLUMNA 2: Atención Actual */}
-                    <div className="lg:col-span-6 flex flex-col gap-5 relative">
-                        <h2 className="text-2xl lg:text-3xl font-bold text-gray-800 tracking-tight">Atención Actual</h2>
-
-                        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[110%] h-[110%] bg-orange-500/20 rounded-full blur-3xl -z-10 animate-pulse hidden lg:block" style={{ opacity: steps.llamado && !steps.cierre ? 0.3 : 0 }}></div>
-
+                <section className="col-span-12 lg:col-span-6 flex flex-col gap-4">
+                    <h2 className="text-xl font-black text-[#1A202C] mb-2 tracking-tight">Atención Actual</h2>
+                    <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-10 flex flex-col h-full relative overflow-hidden">
                         <AnimatePresence mode="wait">
                             {activeTurn ? (
                                 <motion.div 
-                                    layoutId={activeTurn.id} 
-                                    key={activeTurn.id}
-                                    transition={{ type: "spring", bounce: 0.2, duration: 0.8 }}
-                                    className="bg-white border-2 border-gray-100 rounded-3xl p-8 2xl:p-12 shadow-xl shadow-orange-900/5 relative z-10 flex flex-col min-h-[600px] overflow-hidden">
-                                    
-                                    {/* ANIMATION OVERLAY */}
-                                    <AnimatePresence>
-                                        {showSuccessAnim && (
-                                            <motion.div 
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                exit={{ opacity: 0 }}
-                                                className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm">
-                                                <motion.div 
-                                                    initial={{ scale: 0.5, y: 50 }}
-                                                    animate={{ scale: 1, y: 0 }}
-                                                    transition={{ type: "spring", bounce: 0.5 }}
-                                                    className="flex flex-col items-center">
-                                                    <div style={{ width: 300, height: 300 }}>
-                                                        <DotLottiePlayer
-                                                          src="/success.lottie"
-                                                          autoplay
-                                                          loop={false}
-                                                        />
-                                                    </div>
-                                                    <h2 className="text-4xl font-black text-[#1B4332] mt-4 tracking-tight">Atención Exitosa</h2>
-                                                    <p className="text-gray-500 font-bold mt-2">Guardando y llamando al siguiente turno...</p>
-                                                </motion.div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-
-                                    {/* Header Atención */}
-                                    <div className="flex justify-between items-start mb-10">
-                                        <div>
-                                            <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Turno</p>
-                                            <h1 className="text-[clamp(4rem,6vw,6rem)] font-black text-[#0B3D2E] leading-none mb-4">{activeTurn.turn}</h1>
-                                            <div className={`inline-flex items-center gap-3 px-5 py-2 rounded-xl text-lg font-bold shadow-inner ${timerRunning ? 'bg-[#39A900] text-white' : 'bg-gray-200 text-gray-600'}`}>
-                                                <span className="text-2xl tracking-widest">{elapsed}</span> <span className="text-xs tracking-normal mb-0.5">MIN</span>
+                                    key="active"
+                                    initial={{ y: 20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    exit={{ y: -20, opacity: 0 }}
+                                    className="flex flex-col h-full"
+                                >
+                                    {/* Header de Color para el Turno */}
+                                    <div className={`-mx-10 -mt-10 mb-10 p-8 flex justify-between items-center text-white ${getTipoStyles(activeTurn.type).bg} shadow-lg`}>
+                                        <div className="flex items-center gap-6">
+                                            <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-4xl font-black shadow-inner ring-1 ring-white/30">
+                                                {activeTurn.turn}
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-80">Documento: {activeTurn.doc}</p>
+                                                <h1 className="text-2xl font-black tracking-tight uppercase">{activeTurn.type}</h1>
                                             </div>
                                         </div>
-                                        <div className="text-left border-l-2 border-gray-100 pl-8 2xl:pl-12">
-                                            <p className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Documento de Identidad</p>
-                                            <h2 className="text-[clamp(2rem,3.5vw,3.5rem)] font-black text-[#1B4332] tracking-tight mb-4 flex">{activeTurn.doc}</h2>
-                                            <h3 className="text-[clamp(1.2rem,1.8vw,1.8rem)] font-bold text-red-700 tracking-tight uppercase">{activeTurn.type}</h3>
+                                        <div className="text-right">
+                                            <div className="flex items-center gap-3 justify-end">
+                                                <Timer size={24} className="animate-pulse" />
+                                                <span className="text-4xl font-black font-mono tracking-tighter drop-shadow-md">
+                                                    {formatTime(seconds)}
+                                                </span>
+                                            </div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mt-1">Cronómetro Activo</p>
                                         </div>
                                     </div>
 
-                                    {/* Progreso (Steps) */}
-                                    <div className="my-8">
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-5">Progreso de la Atención</p>
-                                        <div className="relative flex justify-between items-center w-full px-2">
-                                            <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -z-10 -translate-y-1/2 mx-16"></div>
-                                            
-                                            {STEP_DEFS.map((step, i) => {
-                                                const done = !!steps[step.key];
-                                                const order = ['llamado','checkin','consultoria','cierre'];
-                                                const isActive = steps[order[i]] && (!order[i+1] || !steps[order[i+1]]);
-                                                // Animación de timbrado/llamada: max 10 repeticiones
-                                                const isCallingAnim = step.key === 'llamado' && steps.llamado && !steps.checkin;
-
+                                    <div className="mb-12 overflow-x-auto pb-4">
+                                        <div className="flex items-center justify-between relative min-w-[500px] px-2">
+                                            <div className="absolute top-5 left-0 w-full h-[2px] bg-gray-100 z-0" />
+                                            {STEP_DEFS.map((step, idx) => {
+                                                const isActive = currentStep === step.key;
+                                                const isCompleted = STEP_DEFS.findIndex(s => s.key === currentStep) > idx;
                                                 return (
-                                                    <motion.button
-                                                        key={step.key}
-                                                        onClick={() => handleStep(step.key)}
-                                                        disabled={done || isPaused}
-                                                        initial={false}
-                                                        animate={isCallingAnim ? { 
-                                                            scale: [1, 1.15, 1, 1.15, 1], 
-                                                            boxShadow: [
-                                                                "0px 0px 0px rgba(57,169,0,0)", 
-                                                                "0px 0px 20px rgba(57,169,0,0.6)", 
-                                                                "0px 0px 0px rgba(57,169,0,0)",
-                                                                "0px 0px 20px rgba(57,169,0,0.6)",
-                                                                "0px 0px 0px rgba(57,169,0,0)"
-                                                            ] 
-                                                        } : { scale: isActive ? 1.05 : 1, boxShadow: "0px 0px 0px rgba(0,0,0,0)" }}
-                                                        transition={isCallingAnim ? { repeat: 10, duration: 1.5, repeatDelay: 20 } : { duration: 0.3 }}
-                                                        className={`relative py-3 2xl:py-4 px-6 2xl:px-8 rounded-full border-2 flex items-center gap-3 text-lg font-semibold transition-colors shadow-sm bg-white
-                                                            ${done && !isActive ? 'text-gray-500 border-gray-200' : ''}
-                                                            ${isActive ? 'border-[#39A900] text-[#1B4332] shadow-xl ring-2 ring-[#39A900]/30' : ''}
-                                                            ${!done ? 'border-gray-300 text-gray-600 hover:border-[#39A900] hover:text-[#39A900] cursor-pointer' : ''}
-                                                        `}>
-
-                                                        
-                                                        {done && !isActive ? (
-                                                            <span className="bg-[#39A900] text-white rounded-full p-1"><Check size={18} strokeWidth={4} /></span>
-                                                        ) : isActive ? (
-                                                            <span className="bg-[#1B4332] text-white rounded-full p-1.5 shadow-md flex items-center justify-center">
-                                                                <step.Icon size={18} strokeWidth={2.5} />
-                                                            </span>
-                                                        ) : (
-                                                            <span className="w-6 h-6 rounded-full border-[3px] border-current flex items-center justify-center text-xs font-black">{i + 1}</span>
-                                                        )}
-                                                        <span className="ml-1 text-sm">{step.label}</span>
-                                                    </motion.button>
+                                                    <div key={step.key} onClick={() => setCurrentStep(step.key)} className="relative z-10 flex items-center gap-3 bg-white px-4 cursor-pointer group">
+                                                        <motion.div 
+                                                            animate={{ 
+                                                                scale: isActive ? 1.2 : 1,
+                                                                backgroundColor: isActive || isCompleted ? '#39A900' : '#FFFFFF',
+                                                                color: isActive || isCompleted ? '#FFFFFF' : '#CBD5E1',
+                                                                borderColor: isActive || isCompleted ? '#39A900' : '#E2E8F0'
+                                                            }}
+                                                            className="w-11 h-11 rounded-full border-2 flex items-center justify-center transition-all shadow-sm"
+                                                        >
+                                                            {isCompleted ? <Check size={20} /> : <step.Icon size={20} />}
+                                                            {isActive && (
+                                                                <motion.div 
+                                                                    layoutId="step-glow"
+                                                                    className="absolute inset-0 rounded-full bg-[#39A900]/20 -z-10"
+                                                                    animate={step.key === 'llamado' ? { 
+                                                                        scale: [1, 1.6, 1],
+                                                                        opacity: [0.5, 0.2, 0.5]
+                                                                    } : { scale: [1, 1.4, 1] }}
+                                                                    transition={step.key === 'llamado' ? { 
+                                                                        repeat: 4, // 4 veces como pidió el usuario
+                                                                        duration: 1,
+                                                                        repeatDelay: 0.2
+                                                                    } : { repeat: Infinity, duration: 2 }}
+                                                                />
+                                                            )}
+                                                            {isActive && step.key === 'llamado' && (
+                                                                <motion.div 
+                                                                    className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center"
+                                                                    initial={{ scale: 0 }}
+                                                                    animate={{ scale: 1 }}
+                                                                >
+                                                                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
+                                                                </motion.div>
+                                                            )}
+                                                        </motion.div>
+                                                        <div className="flex flex-col">
+                                                            <span className={`text-[9px] font-bold ${isActive ? 'text-[#39A900]' : 'text-gray-400'} leading-none`}>({step.id})</span>
+                                                            <span className={`text-[12px] font-black uppercase tracking-tight ${isActive ? 'text-gray-900' : 'text-gray-300'}`}>{step.label}</span>
+                                                        </div>
+                                                    </div>
                                                 );
                                             })}
                                         </div>
                                     </div>
 
-                                    {/* Observaciones */}
-                                    <div className="mt-auto flex flex-col pt-6">
-                                        <label className="text-sm font-bold text-gray-600 mb-3 flex items-center gap-2 uppercase tracking-widest">
-                                            <Edit3 size={18} /> Observaciones de la Atención
-                                        </label>
-                                        <textarea 
-                                            className="w-full bg-white border-2 border-gray-200 rounded-2xl p-5 text-base text-gray-700 min-h-[120px] focus:ring-2 focus:ring-[#39A900] focus:border-[#39A900] outline-none resize-none shadow-sm"
-                                            placeholder="Ingrese aquí los detalles y conclusiones de la atención brindada..."
-                                            value={observaciones}
-                                            onChange={(e) => setObservaciones(e.target.value)}
-                                            readOnly={isPaused || !activeTurn}
-                                        ></textarea>
-                                        
-                                        <button 
-                                            onClick={handleFinalizar}
-                                            disabled={disableFinalizar}
-                                            className={`w-full mt-6 py-5 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-[0_6px_20px_rgba(0,0,0,0.1)] group text-lg tracking-widest relative overflow-hidden
-                                                ${disableFinalizar ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-[#39A900] to-[#1B4332] hover:scale-[1.02] text-white'}`}>
-                                            <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                                            <ClipboardList size={26} className="relative z-10" /> 
-                                            <span className="relative z-10">ARCHIVAR Y CERRAR ATENCIÓN</span> 
-                                            <ArrowRight size={26} className="relative z-10 group-hover:translate-x-2 transition-transform" />
-                                        </button>
+                                    <div className="mt-auto space-y-6">
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">Observaciones de la Atención</label>
+                                            <textarea 
+                                                value={observaciones} onChange={e => setObservaciones(e.target.value)}
+                                                className="w-full bg-white border border-gray-200 rounded-2xl p-6 text-sm text-gray-700 min-h-[140px] focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500 outline-none transition-all resize-none shadow-inner"
+                                                placeholder="Ingrese aquí los detalles y conclusiones..."
+                                            />
+                                        </div>
+                                        {currentStep === 'llamado' ? (
+                                            <motion.button 
+                                                animate={{ 
+                                                    x: [0, -2, 2, -2, 2, 0],
+                                                    scale: [1, 1.05, 1],
+                                                    boxShadow: [
+                                                        '0px 0px 0px rgba(57,169,0,0)', 
+                                                        '0px 10px 40px rgba(57,169,0,0.6)', 
+                                                        '0px 0px 0px rgba(57,169,0,0)'
+                                                    ] 
+                                                }}
+                                                transition={{ 
+                                                    repeat: Infinity, 
+                                                    duration: 0.5,
+                                                    times: [0, 0.1, 0.2, 0.3, 0.4, 0.5]
+                                                }}
+                                                whileHover={{ scale: 1.08 }}
+                                                whileTap={{ scale: 0.95, rotate: -5 }}
+                                                onClick={handleCheckIn} 
+                                                className="w-full py-5 bg-[#39A900] text-white font-black text-sm rounded-2xl shadow-lg shadow-green-500/20 flex items-center justify-center gap-3 uppercase tracking-widest border border-[#4ade80]"
+                                            >
+                                                Llamando al Usuario... ({callCount + 1}/10) 
+                                                <motion.div
+                                                    animate={{ rotate: [-20, 20, -20] }}
+                                                    transition={{ repeat: Infinity, duration: 0.2 }}
+                                                >
+                                                    <PhoneCall size={22} />
+                                                </motion.div>
+                                            </motion.button>
+                                        ) : (
+                                            <motion.button 
+                                                whileHover={{ scale: 1.01 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                disabled={currentStep !== 'consultoria' && currentStep !== 'cierre'}
+                                                onClick={handleFinalizar} 
+                                                className={`w-full py-5 text-white font-black text-sm rounded-2xl shadow-lg flex items-center justify-center gap-3 transition-all uppercase tracking-widest ${
+                                                    (currentStep === 'consultoria' || currentStep === 'cierre') ? 'bg-[#F97316] hover:bg-[#EA580C] shadow-orange-500/20' : 'bg-gray-300 shadow-none cursor-not-allowed opacity-50'
+                                                }`}
+                                            >
+                                                Finalizar y Archivar Atención <ArrowRight size={18} />
+                                            </motion.button>
+                                        )}
                                     </div>
                                 </motion.div>
                             ) : (
-                                <motion.div initial={{opacity:0}} animate={{opacity:1}} className="bg-white border-2 border-gray-100 rounded-3xl p-12 flex flex-col items-center justify-center h-full min-h-[600px]">
-                                    <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-                                        <CheckCircle2 size={64} className="text-[#39A900]" />
-                                    </div>
-                                    <h2 className="text-4xl font-black text-gray-800">No hay turnos activos</h2>
-                                    <p className="text-gray-500 text-lg mt-2">Atiende al siguiente ciudadano en la fila.</p>
+                                <motion.div 
+                                    key="waiting"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="flex-1 flex flex-col items-center justify-center text-gray-200"
+                                >
+                                    <Zap size={80} strokeWidth={1} className="animate-bounce" />
+                                    <p className="mt-4 font-black uppercase tracking-widest">Esperando nuevo turno</p>
                                 </motion.div>
                             )}
                         </AnimatePresence>
                     </div>
+                </section>
 
-                    {/* COLUMNA 3: Comandos y Resumen */}
-                    <div className="lg:col-span-3 flex flex-col gap-5">
-                        <h2 className="text-2xl lg:text-3xl font-bold text-gray-800 tracking-tight">Control y Resumen</h2>
-                        
-                        <div className="flex flex-col gap-4">
-                            {/* El botón de Siguiente Turno ha sido eliminado por solicitud del usuario */}
-                            
-                            <button
-                                onClick={handleNoAsistio}
-                                disabled={disableNoAsistio}
-                                className={`w-full py-6 rounded-2xl font-black text-lg tracking-widest flex items-center justify-center gap-3 transition-all border-2
-                                    ${disableNoAsistio ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white hover:bg-red-50 text-red-600 border-red-200 shadow-md transform hover:-translate-y-1'}`}>
-                                <Ban size={26} className={disableNoAsistio ? "text-gray-400" : "text-red-500"} /> NO ASISTIÓ
-                            </button>
-                            <button
-                                onClick={() => setIsPaused(!isPaused)}
-                                disabled={disableDescansoBtn}
-                                className={`w-full py-6 rounded-2xl font-black text-lg tracking-widest flex items-center justify-center gap-3 transition-all border-2
-                                    ${disableDescansoBtn ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed' : isPaused ? 'bg-orange-50 hover:bg-orange-100 text-orange-600 border-orange-300' : 'bg-white hover:bg-orange-50 text-orange-500 border-orange-200 shadow-md hover:-translate-y-1'}`}>
-                                <Clock size={26} className={disableDescansoBtn ? "text-gray-400" : isPaused ? "text-orange-600" : "text-orange-500"} /> {isPaused ? 'REANUDAR' : 'TOMAR DESCANSO'}
+                <section className="col-span-12 lg:col-span-3 flex flex-col gap-8">
+                    <div className="space-y-4">
+                        <h2 className="text-xl font-black text-[#1A202C] tracking-tight">Control Operativo</h2>
+                        <div className="space-y-3">
+                            <button 
+                                disabled={currentStep !== 'cierre'}
+                                className={`w-full py-4 border font-black text-xs rounded-xl flex items-center justify-center gap-3 uppercase tracking-widest transition-all ${
+                                    currentStep === 'cierre' ? 'bg-white border-blue-200 text-blue-600 hover:bg-blue-50' : 'bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed'
+                                }`}
+                            >
+                                <PauseCircle size={18} /> Tomar Descanso
                             </button>
                         </div>
+                    </div>
 
-                        <div className="mt-8">
-                            <div className="flex items-center justify-between mb-5">
-                                <h3 className="font-black text-2xl text-gray-800 tracking-tight">Estadísticas</h3>
-                                <span className="text-xs font-bold bg-gray-200/80 py-1.5 px-3 rounded-lg uppercase tracking-widest text-gray-600">Hoy</span>
+                    <div className="space-y-4">
+                        <h2 className="text-xl font-black text-[#1A202C] tracking-tight">Estadísticas</h2>
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm flex flex-col items-center text-center">
+                                <span className="text-lg font-black text-blue-600">{statsHoy?.promedio || 0}m</span>
+                                <span className="text-[8px] font-black text-blue-400 uppercase mt-1">Promedio</span>
                             </div>
-                            
-                            <div className="grid grid-cols-3 gap-4">
-                                <motion.div whileHover={{ scale: 1.05 }} className="bg-gray-100/80 rounded-2xl p-4 flex flex-col justify-center items-center text-center">
-                                    <h4 className="text-2xl font-black text-gray-800 mb-1 leading-none">15<span className="text-base">m</span></h4>
-                                    <p className="text-[10px] text-gray-500 font-bold uppercase leading-tight mt-1">Promedio<br/>Atención</p>
-                                </motion.div>
-                                <motion.div whileHover={{ scale: 1.05 }} className="bg-gray-100/80 rounded-2xl p-5 flex flex-col justify-center items-center text-center">
-                                    <h4 className="text-3xl font-black text-gray-800 mb-1 leading-none">00:00</h4>
-                                    <p className="text-[11px] text-gray-500 font-bold uppercase leading-tight mt-1">Tiempo<br/>Libre</p>
-                                </motion.div>
-                                <motion.div whileHover={{ scale: 1.05 }} className="bg-gray-100/80 rounded-2xl p-4 flex flex-col justify-center items-center text-center">
-                                    <h4 className="text-2xl font-black text-gray-800 mb-1 leading-none">{historyItems.length + 130}</h4>
-                                    <p className="text-[10px] text-gray-500 font-bold uppercase leading-tight mt-1">Turnos<br/>Hoy</p>
-                                </motion.div>
+                            <div className="bg-green-50 p-4 rounded-xl border border-green-100 shadow-sm flex flex-col items-center text-center">
+                                <span className="text-lg font-black text-[#39A900]">ACT</span>
+                                <span className="text-[8px] font-black text-green-400 uppercase mt-1">Estado</span>
+                            </div>
+                            <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 shadow-sm flex flex-col items-center text-center">
+                                <span className="text-lg font-black text-purple-600">{statsHoy?.total || 0}</span>
+                                <span className="text-[8px] font-black text-purple-400 uppercase mt-1">Hoy</span>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* HISTORIAL INFERIOR FULL WIDTH */}
-                <div className="bg-white rounded-3xl border-2 border-gray-100 shadow-sm overflow-hidden mt-8 flex-shrink-0">
-                    <div className="px-8 py-6 border-b-2 border-gray-100 flex items-center justify-between">
-                        <h2 className="font-bold text-gray-800 text-2xl tracking-tight">Historial Reciente de Atenciones</h2>
+                    <div className="flex-1 flex flex-col min-h-0">
+                        <h2 className="text-xl font-black text-[#1A202C] tracking-tight mb-4 flex items-center gap-2">
+                            <ClipboardList size={20} className="text-[#39A900]" />
+                            Historial Reciente
+                        </h2>
+                        <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                            {(usePage().props.historialAsesor || []).map((h, idx) => (
+                                <motion.div 
+                                    key={idx}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="bg-white p-4 rounded-xl border border-gray-50 shadow-sm group hover:border-green-100 transition-all"
+                                >
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-sm font-black text-gray-800">{h.turn}</span>
+                                        <button className="p-1.5 text-gray-300 hover:text-[#39A900] transition-colors" title="Enviar Reporte">
+                                            <FileText size={14} />
+                                        </button>
+                                    </div>
+                                    <div className="flex justify-between items-end">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-400">ID: {h.doc}</p>
+                                            <p className="text-[8px] text-gray-400 uppercase mt-0.5">{h.time}</p>
+                                        </div>
+                                        <span className="text-[9px] font-black text-[#39A900] uppercase tracking-tighter">{h.status}</span>
+                                    </div>
+                                </motion.div>
+                            ))}
+                            {(!usePage().props.historialAsesor || usePage().props.historialAsesor.length === 0) && (
+                                <div className="text-center py-8 text-gray-300 italic text-xs font-bold uppercase tracking-widest">Sin atenciones hoy</div>
+                            )}
+                        </div>
                     </div>
-                    <div className="overflow-x-auto w-full">
-                        <table className="w-full text-left font-['Inter'] whitespace-nowrap">
-                            <thead>
-                                <tr className="border-b-2 border-gray-100 bg-gray-50/50">
-                                    {['TURNO', 'IDENTIFICACIÓN', 'TIPO', 'DURACIÓN', 'OBSERVACIONES', 'ESTADO', ''].map((h, i) => (
-                                        <th key={i} className="py-5 px-8 text-xs font-black text-gray-400 uppercase tracking-widest">{h}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                <AnimatePresence>
-                                    {historyItems.map((row, idx) => (
-                                        <motion.tr 
-                                            key={`${row.turn}-${idx}`}
-                                            initial={{ opacity: 0, x: -20, backgroundColor: '#f0fdf4' }}
-                                            animate={{ opacity: 1, x: 0, backgroundColor: 'transparent' }}
-                                            transition={{ duration: 0.5 }}
-                                            className="hover:bg-gray-50/80 transition-colors">
-                                            <td className="py-5 px-8 font-black text-gray-800 text-lg">{row.turn}</td>
-                                            <td className="py-5 px-8">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 border border-slate-200 flex items-center justify-center text-[10px] font-black shrink-0">
-                                                        ID
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xl font-bold text-gray-800 leading-none font-mono tracking-wider">{row.doc}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="py-5 px-8">
-                                                <div className="flex items-center gap-3">
-                                                    <span className={`text-xs font-black uppercase px-3 py-1 rounded-lg 
-                                                        ${row.type === 'Empresa' ? 'bg-blue-100 text-blue-700' : row.type === 'Prioritaria' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{row.type}</span>
-                                                    <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-lg">{row.typeDetails}</span>
-                                                </div>
-                                            </td>
-                                            <td className="py-5 px-8 text-base font-semibold text-gray-700">{row.duration}</td>
-                                            <td className="py-5 px-8 text-sm text-gray-500 max-w-[280px] truncate">{row.obs}</td>
-                                            <td className="py-5 px-8">
-                                                <span className={`text-xs font-black uppercase px-4 py-1.5 rounded-xl ${row.statusColor}`}>
-                                                    {row.status}
-                                                </span>
-                                            </td>
-                                            <td className="py-5 px-8 text-right">
-                                                <button className="text-sm text-[#39A900] hover:text-[#2a7a00] font-black flex items-center gap-1 justify-end ml-auto group">
-                                                    <span className="group-hover:translate-x-[-2px] transition-transform text-xs uppercase tracking-widest">Ver más</span> <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                                                </button>
-                                            </td>
-                                        </motion.tr>
-                                    ))}
-                                </AnimatePresence>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
+                </section>
             </main>
+            <style dangerouslySetInnerHTML={{ __html: `
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+            `}} />
+            {/* ANIMACIÓN DE ÉXITO (ESTILO NEQUI) */}
+            <AnimatePresence>
+                {showSuccessAnim && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1, transition: { type: "spring", stiffness: 200, damping: 15 } }}
+                            className="w-32 h-32 bg-[#39A900] rounded-full flex items-center justify-center shadow-2xl shadow-green-500/50 mb-6"
+                        >
+                            <svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                                <motion.path 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round" 
+                                    d="M5 13l4 4L19 7" 
+                                    initial={{ pathLength: 0 }}
+                                    animate={{ pathLength: 1 }}
+                                    transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
+                                />
+                            </svg>
+                        </motion.div>
+                        <motion.h2 
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.6 }}
+                            className="text-2xl font-black text-[#39A900] uppercase tracking-widest"
+                        >
+                            ¡Atención Finalizada!
+                        </motion.h2>
+                        <motion.p
+                            initial={{ y: 10, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.8 }}
+                            className="text-gray-500 font-bold mt-2"
+                        >
+                            Archivando historial y observaciones...
+                        </motion.p>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
         </div>
     );
 }

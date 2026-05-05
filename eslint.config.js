@@ -11,6 +11,11 @@ export default [
         languageOptions: {
             ecmaVersion: "latest",
             sourceType: "module",
+            parserOptions: {
+                ecmaFeatures: {
+                    jsx: true
+                }
+            },
             globals: {
                 window: "readonly",
                 document: "readonly",
@@ -20,7 +25,8 @@ export default [
             }
         },
         rules: {
-            "no-unused-vars": "warn"
+            "no-unused-vars": "warn",
+            "no-undef": "off"
         }
     }
 ];

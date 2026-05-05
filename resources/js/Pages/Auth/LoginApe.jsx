@@ -19,28 +19,25 @@ export default function LoginApe({ status }) {
         e.preventDefault();
         
         if (isLogin) {
-            // Ingreso directo sin animaciones para usuarios que ya tienen cuenta
+            // Ingreso directo e inmediato
             post(route('login'));
         } else {
+            // Eliminamos el delay artificial de 1.5s para que sea más rápido
             setAuthStatus('loading');
-            
-            // Simular tiempo de conexión para la animación SOLO en registro
-            setTimeout(() => {
-                post(route('register'), {
-                    onSuccess: () => {
-                        setAuthStatus('success');
-                        setTimeout(() => {
-                            setAuthStatus('idle');
-                            setIsLogin(true); // Forza el regreso visual al formulario de inicio de sesión
-                            reset('password', 'password_confirmation'); // Borra contraseñas por seguridad
-                        }, 2500);
-                    },
-                    onError: () => {
-                        setAuthStatus('error');
-                        setTimeout(() => setAuthStatus('idle'), 2500);
-                    }
-                });
-            }, 1500);
+            post(route('register'), {
+                onSuccess: () => {
+                    setAuthStatus('success');
+                    setTimeout(() => {
+                        setAuthStatus('idle');
+                        setIsLogin(true);
+                        reset('password', 'password_confirmation');
+                    }, 1000); // Reducido de 2.5s a 1s
+                },
+                onError: () => {
+                    setAuthStatus('error');
+                    setTimeout(() => setAuthStatus('idle'), 1500); // Reducido de 2.5s a 1.5s
+                }
+            });
         }
     };
 
@@ -78,8 +75,8 @@ export default function LoginApe({ status }) {
                             className="w-full px-5 py-3.5 bg-white/80 border border-[#2D6A4F]/20 rounded-xl focus:ring-2 focus:ring-[#40916C] focus:bg-white transition-all text-[#1B4332] shadow-sm font-sans text-lg tracking-[0.2em] placeholder:tracking-normal placeholder:text-base placeholder:font-['Inter']" placeholder="Confirmar Contraseña" />
                     )}
 
-                    <button type="submit" disabled={processing} className="w-full py-4 mt-2 bg-[#1B4332] hover:bg-[#2D6A4F] text-white font-bold rounded-xl transition-all duration-300 shadow-[0_8px_20px_rgba(27,67,50,0.2)] hover:shadow-[0_12px_25px_rgba(27,67,50,0.3)] hover:-translate-y-1">
-                        {isLg ? 'Entrar al Panel de Control' : 'Crear Perfil de Asesor'}
+                    <button type="submit" disabled={processing} className={`w-full py-4 mt-2 ${processing ? 'bg-gray-400' : 'bg-[#1B4332] hover:bg-[#2D6A4F]'} text-white font-bold rounded-xl transition-all duration-300 shadow-[0_8px_20px_rgba(27,67,50,0.2)] hover:shadow-[0_12px_25px_rgba(27,67,50,0.3)] hover:-translate-y-1`}>
+                        {processing ? 'Cargando...' : (isLg ? 'Entrar al Panel de Control' : 'Crear Perfil de Asesor')}
                     </button>
                 </form>
 
@@ -115,9 +112,9 @@ export default function LoginApe({ status }) {
                 <img src="/logo-ape.png" alt="APE SENA" className="h-14 lg:h-16 drop-shadow-lg pointer-events-auto cursor-pointer filter hover:brightness-110 transition-all" />
             </header>
 
-            {/* OVERLAY AUTH ANIMADO CINEMATOGRÁFICO */}
+            {/* OVERLAY AUTH - MÁS RÁPIDO Y LIGERO */}
             {authStatus !== 'idle' && (
-                <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center transition-all duration-700 opacity-0 animate-[fadeIn_0.5s_forwards]">
+                <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-md flex flex-col items-center justify-center transition-all duration-300 opacity-0 animate-[fadeIn_0.3s_forwards]">
                     {/* Logo Flotante Intacto */}
                     <div className="relative flex flex-col items-center justify-center mb-6">
                         <img 

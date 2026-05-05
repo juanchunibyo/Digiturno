@@ -10,7 +10,7 @@ class Asesor extends Model
 {
     protected $table = 'asesores';
 
-    protected $fillable = ['user_id', 'nro_contrato', 'tipo_asesor', 'vigencia', 'taquilla'];
+    protected $fillable = ['user_id', 'nro_contrato', 'tipo_asesor', 'vigencia', 'taquilla', 'last_activity', 'mensaje_coordinador'];
 
     public function user(): BelongsTo
     {
