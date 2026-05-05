@@ -10,9 +10,9 @@ class Atencion extends Model
     protected $table = 'atenciones';
 
     protected $fillable = [
-        'turno_id', 'asesor_id', 'tipo',
+        'turno_id', 'asesor_id',
         'hora_inicio', 'hora_fin',
-        'observaciones', 'estado',
+        'observaciones', 'estado_id',
     ];
 
     protected $casts = [
@@ -28,5 +28,10 @@ class Atencion extends Model
     public function asesor(): BelongsTo
     {
         return $this->belongsTo(Asesor::class);
+    }
+
+    public function estadoAtencion(): BelongsTo
+    {
+        return $this->belongsTo(EstadoAtencion::class, 'estado_id');
     }
 }

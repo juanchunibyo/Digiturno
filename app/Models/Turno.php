@@ -8,15 +8,20 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Turno extends Model
 {
-    protected $fillable = ['solicitante_id', 'turno_numero', 'tipo', 'hora_fecha'];
+    protected $fillable = ['persona_id', 'turno_numero', 'tipo_turno_id', 'hora_fecha'];
 
     protected $casts = [
         'hora_fecha' => 'datetime',
     ];
 
-    public function solicitante(): BelongsTo
+    public function persona(): BelongsTo
     {
-        return $this->belongsTo(Solicitante::class);
+        return $this->belongsTo(Persona::class);
+    }
+
+    public function tipoTurno(): BelongsTo
+    {
+        return $this->belongsTo(TipoTurno::class);
     }
 
     public function atencion(): HasOne

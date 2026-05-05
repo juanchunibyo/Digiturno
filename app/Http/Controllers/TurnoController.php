@@ -24,8 +24,7 @@ class TurnoController extends Controller
             $personaId = DB::table('personas')->insertGetId([
                 'documento'      => $request->documento,
                 'tipo_documento' => $request->tipo_documento,
-                'nombres'        => 'Sin Nombre',
-                'apellidos'      => '',
+                // Omitimos nombres y apellidos porque la BD no los tiene
                 'telefono'       => $request->telefono,
                 'created_at'     => now(),
                 'updated_at'     => now(),
@@ -34,18 +33,11 @@ class TurnoController extends Controller
             $personaId = $persona->id;
         }
 
-        // 2. Solicitante
-        $solicitanteId = DB::table('solicitantes')->insertGetId([
-            'persona_id'       => $personaId,
-            'tipo_solicitante' => $request->tipo,
-            'created_at'       => now(),
-            'updated_at'       => now(),
-        ]);
-
-        // 3. Número de turno: prefijo + correlativo del día
+        // 2. Número de turno: prefijo + correlativo del día
         $prefijos = [
             'General'     => 'N',
             'Prioritaria' => 'P',
+            'Víctima'    => 'V',
             'Víctimas'    => 'V',
             'Empresa'     => 'E',
         ];
@@ -53,11 +45,15 @@ class TurnoController extends Controller
         $count   = DB::table('turnos')->whereDate('created_at', today())->count() + 1;
         $numero  = $prefijo . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
 
-        // 4. Turno
+        // 3. Buscar el ID del tipo de turno en la base de datos
+        $tipoObj = DB::table('tipos_turno')->where('nombre', 'like', '%' . $request->tipo . '%')->first();
+        $tipoId = $tipoObj ? $tipoObj->id : 3; // 3 es General por defecto
+
+        // 4. Guardar el Turno
         DB::table('turnos')->insert([
-            'solicitante_id' => $solicitanteId,
+            'persona_id'     => $personaId,
             'turno_numero'   => $numero,
-            'tipo'           => $request->tipo,
+            'tipo_turno_id'  => $tipoId,
             'hora_fecha'     => now(),
             'created_at'     => now(),
             'updated_at'     => now(),

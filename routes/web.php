@@ -32,21 +32,25 @@ Route::get('/pantalla/turnos', function () {
     // Todos los turnos "En Curso" (puede haber varios asesores atendiendo a la vez)
     $enCurso = DB::table('atenciones')
         ->join('turnos', 'atenciones.turno_id', '=', 'turnos.id')
+        ->leftJoin('tipos_turno', 'turnos.tipo_turno_id', '=', 'tipos_turno.id')
+        ->leftJoin('estados_atencion', 'atenciones.estado_id', '=', 'estados_atencion.id')
         ->join('asesores', 'atenciones.asesor_id', '=', 'asesores.id')
-        ->where('atenciones.estado', 'En Curso')
+        ->where('estados_atencion.nombre', 'En Proceso')
         ->orderBy('atenciones.id', 'desc')
-        ->select('turnos.id','turnos.turno_numero','turnos.tipo','asesores.taquilla','atenciones.estado')
+        ->select('turnos.id','turnos.turno_numero','tipos_turno.nombre as tipo','asesores.taquilla','estados_atencion.nombre as estado')
         ->first();
 
     // Historial reciente (últimos 4 completados/no asistió)
     $historial = DB::table('atenciones')
         ->join('turnos', 'atenciones.turno_id', '=', 'turnos.id')
+        ->leftJoin('tipos_turno', 'turnos.tipo_turno_id', '=', 'tipos_turno.id')
+        ->leftJoin('estados_atencion', 'atenciones.estado_id', '=', 'estados_atencion.id')
         ->join('asesores', 'atenciones.asesor_id', '=', 'asesores.id')
-        ->whereIn('atenciones.estado', ['Completado', 'No Asistió'])
-        ->whereDate('atenciones.created_at', today())
+        ->whereIn('estados_atencion.nombre', ['Finalizado', 'No Asistió'])
+        
         ->orderBy('atenciones.id', 'desc')
         ->limit(4)
-        ->select('turnos.id','turnos.turno_numero','turnos.tipo','asesores.taquilla','atenciones.estado')
+        ->select('turnos.id','turnos.turno_numero','tipos_turno.nombre as tipo','asesores.taquilla','estados_atencion.nombre as estado')
         ->get()
         ->map(fn($t) => [
             'id'      => $t->id,
@@ -76,20 +80,24 @@ Route::get('/pantalla/turnos', function () {
 Route::get('/pantalla', function () {
     $enCurso = DB::table('atenciones')
         ->join('turnos', 'atenciones.turno_id', '=', 'turnos.id')
+        ->leftJoin('tipos_turno', 'turnos.tipo_turno_id', '=', 'tipos_turno.id')
+        ->leftJoin('estados_atencion', 'atenciones.estado_id', '=', 'estados_atencion.id')
         ->join('asesores', 'atenciones.asesor_id', '=', 'asesores.id')
-        ->where('atenciones.estado', 'En Curso')
+        ->where('estados_atencion.nombre', 'En Proceso')
         ->orderBy('atenciones.id', 'desc')
-        ->select('turnos.id','turnos.turno_numero','turnos.tipo','asesores.taquilla','atenciones.estado')
+        ->select('turnos.id','turnos.turno_numero','tipos_turno.nombre as tipo','asesores.taquilla','estados_atencion.nombre as estado')
         ->first();
 
     $historial = DB::table('atenciones')
         ->join('turnos', 'atenciones.turno_id', '=', 'turnos.id')
+        ->leftJoin('tipos_turno', 'turnos.tipo_turno_id', '=', 'tipos_turno.id')
+        ->leftJoin('estados_atencion', 'atenciones.estado_id', '=', 'estados_atencion.id')
         ->join('asesores', 'atenciones.asesor_id', '=', 'asesores.id')
-        ->whereIn('atenciones.estado', ['Completado', 'No Asistió'])
-        ->whereDate('atenciones.created_at', today())
+        ->whereIn('estados_atencion.nombre', ['Finalizado', 'No Asistió'])
+        
         ->orderBy('atenciones.id', 'desc')
         ->limit(4)
-        ->select('turnos.id','turnos.turno_numero','turnos.tipo','asesores.taquilla','atenciones.estado')
+        ->select('turnos.id','turnos.turno_numero','tipos_turno.nombre as tipo','asesores.taquilla','estados_atencion.nombre as estado')
         ->get()
         ->map(fn($t) => [
             'id'      => $t->id,
@@ -131,16 +139,16 @@ Route::get('/dashboard-asesor', function () {
 
     // Turnos en espera: sin atención activa "En Curso"
     $turnosEnEspera = DB::table('turnos')
+        ->leftJoin('tipos_turno', 'turnos.tipo_turno_id', '=', 'tipos_turno.id')
         ->leftJoin('atenciones', function($join) {
             $join->on('turnos.id', '=', 'atenciones.turno_id')
-                 ->whereIn('atenciones.estado', ['En Curso', 'Completado', 'No Asistió']);
+                 ->whereIn('atenciones.estado_id', [2, 3, 4]);
         })
-        ->leftJoin('solicitantes', 'turnos.solicitante_id', '=', 'solicitantes.id')
-        ->leftJoin('personas', 'solicitantes.persona_id', '=', 'personas.id')
+        ->leftJoin('personas', 'turnos.persona_id', '=', 'personas.id')
         ->whereNull('atenciones.id')
-        ->whereDate('turnos.created_at', today())
+        
         ->orderBy('turnos.id', 'asc')
-        ->select('turnos.*', 'personas.documento')
+        ->select('turnos.*', 'tipos_turno.nombre as tipo', 'personas.documento')
         ->get()
         ->map(fn($t) => [
             'id'       => $t->id,
@@ -155,28 +163,30 @@ Route::get('/dashboard-asesor', function () {
     // Atención activa del asesor
     $atencionActiva = DB::table('atenciones')
         ->join('turnos', 'atenciones.turno_id', '=', 'turnos.id')
-        ->leftJoin('solicitantes', 'turnos.solicitante_id', '=', 'solicitantes.id')
-        ->leftJoin('personas', 'solicitantes.persona_id', '=', 'personas.id')
+        ->leftJoin('tipos_turno', 'turnos.tipo_turno_id', '=', 'tipos_turno.id')
+        ->leftJoin('estados_atencion', 'atenciones.estado_id', '=', 'estados_atencion.id')
+        ->leftJoin('personas', 'turnos.persona_id', '=', 'personas.id')
         ->where('atenciones.asesor_id', $asesor->id)
-        ->where('atenciones.estado', 'En Curso')
-        ->select('atenciones.*', 'turnos.turno_numero', 'turnos.tipo', 'personas.documento')
+        ->where('estados_atencion.nombre', 'En Proceso')
+        ->select('atenciones.*', 'turnos.turno_numero', 'tipos_turno.nombre as tipo', 'personas.documento')
         ->first();
 
     // Historial del asesor (hoy)
     $historialAsesor = DB::table('atenciones')
         ->join('turnos', 'atenciones.turno_id', '=', 'turnos.id')
-        ->leftJoin('solicitantes', 'turnos.solicitante_id', '=', 'solicitantes.id')
-        ->leftJoin('personas', 'solicitantes.persona_id', '=', 'personas.id')
+        ->leftJoin('tipos_turno', 'turnos.tipo_turno_id', '=', 'tipos_turno.id')
+        ->leftJoin('estados_atencion', 'atenciones.estado_id', '=', 'estados_atencion.id')
+        ->leftJoin('personas', 'turnos.persona_id', '=', 'personas.id')
         ->where('atenciones.asesor_id', $asesor->id)
-        ->whereIn('atenciones.estado', ['Completado', 'No Asistió'])
-        ->whereDate('atenciones.created_at', today())
+        ->whereIn('estados_atencion.nombre', ['Finalizado', 'No Asistió'])
+        
         ->orderBy('atenciones.id', 'desc')
         ->select(
             'turnos.turno_numero',
-            'turnos.tipo',
+            'tipos_turno.nombre as tipo',
             'personas.documento',
             'atenciones.observaciones',
-            'atenciones.estado',
+            'estados_atencion.nombre as estado',
             'atenciones.hora_inicio',
             'atenciones.hora_fin'
         )
@@ -202,8 +212,8 @@ Route::get('/dashboard-asesor', function () {
     // Estadísticas del día
     $statsHoy = DB::table('atenciones')
         ->where('asesor_id', $asesor->id)
-        ->whereDate('created_at', today())
-        ->whereIn('estado', ['Completado', 'No Asistió'])
+        
+        ->whereIn('estado_id', [3, 4])
         ->selectRaw('COUNT(*) as total, AVG(TIMESTAMPDIFF(SECOND, hora_inicio, hora_fin)) as promedio_seg')
         ->first();
 
@@ -213,9 +223,9 @@ Route::get('/dashboard-asesor', function () {
         'atencionActiva' => $atencionActiva ? [
             'id'            => $atencionActiva->id,
             'turno_id'      => $atencionActiva->turno_id,
-            'turno_numero'  => $atencionActiva->turno_numero,
-            'tipo'          => $atencionActiva->tipo,
-            'documento'     => $atencionActiva->documento ?? '--',
+            'turn'          => $atencionActiva->turno_numero,
+            'type'          => $atencionActiva->tipo,
+            'doc'           => $atencionActiva->documento ?? '--',
             'hora_inicio'   => $atencionActiva->hora_inicio,
             'observaciones' => $atencionActiva->observaciones,
         ] : null,
@@ -238,9 +248,9 @@ Route::post('/asesor/llamar-turno', function () {
     Atencion::create([
         'turno_id'   => $turnoId,
         'asesor_id'  => $asesor->id,
-        'tipo'       => Turno::find($turnoId)?->tipo ?? 'General',
+        
         'hora_inicio'=> now(),
-        'estado'     => 'En Curso',
+        'estado_id'  => 2,
     ]);
 
     return back();
@@ -252,15 +262,15 @@ Route::post('/asesor/llamar-turno', function () {
 Route::post('/asesor/finalizar-turno', function () {
     $user   = request()->user();
     $asesor = Asesor::where('user_id', $user->id)->first();
-    $estado = request('estado', 'Completado');
+    $estado = request('estado', 3);
 
     $atencion = Atencion::where('asesor_id', $asesor->id)
-        ->where('estado', 'En Curso')
+        ->where('estado_id', 2)
         ->first();
 
     if ($atencion) {
         $atencion->update([
-            'estado'        => $estado,
+            'estado_id'    => $estado == 'Completado' ? 3 : ($estado == 'No Asistió' ? 4 : 3),
             'hora_fin'      => now(),
             'observaciones' => request('observaciones'),
         ]);
@@ -288,17 +298,18 @@ Route::get('/dashboard-coordinador', function () {
 
     // KPIs reales
     $turnosEnEsperaCount = DB::table('turnos')
+        ->leftJoin('tipos_turno', 'turnos.tipo_turno_id', '=', 'tipos_turno.id')
         ->leftJoin('atenciones', function($join) {
             $join->on('turnos.id', '=', 'atenciones.turno_id')
-                 ->whereIn('atenciones.estado', ['En Curso', 'Completado', 'No Asistió']);
+                 ->whereIn('atenciones.estado_id', [2, 3, 4]);
         })
         ->whereNull('atenciones.id')
-        ->whereDate('turnos.created_at', today())
+        
         ->count();
 
     $tiempoPromedio = DB::table('atenciones')
-        ->whereDate('created_at', today())
-        ->where('estado', 'Completado')
+        
+        ->where('estado_id', 3)
         ->whereNotNull('hora_inicio')
         ->whereNotNull('hora_fin')
         ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, hora_inicio, hora_fin)) as promedio')
@@ -306,13 +317,13 @@ Route::get('/dashboard-coordinador', function () {
 
     $totalAsesores  = DB::table('asesores')->count();
     $asesoresActivos = DB::table('atenciones')
-        ->where('estado', 'En Curso')
+        ->where('estado_id', 2)
         ->distinct('asesor_id')
         ->count('asesor_id');
 
     $atencionesHoyCount = DB::table('atenciones')
-        ->whereDate('created_at', today())
-        ->whereIn('estado', ['Completado', 'No Asistió'])
+        
+        ->whereIn('estado_id', [3, 4])
         ->count();
 
     // Asesores con su estado actual
@@ -320,14 +331,14 @@ Route::get('/dashboard-coordinador', function () {
         ->join('users', 'asesores.user_id', '=', 'users.id')
         ->leftJoin('atenciones', function($join) {
             $join->on('asesores.id', '=', 'atenciones.asesor_id')
-                 ->where('atenciones.estado', '=', 'En Curso');
+                 ->where('atenciones.estado_id', '=', 2);
         })
         ->leftJoin('turnos', 'atenciones.turno_id', '=', 'turnos.id')
         ->select(
             'asesores.id',
             'users.name',
             'asesores.taquilla',
-            'atenciones.estado as atencion_estado',
+            'estados_atencion.nombre as atencion_estado',
             'turnos.turno_numero',
             'atenciones.hora_inicio'
         )
@@ -356,14 +367,15 @@ Route::get('/dashboard-coordinador', function () {
 
     // Ciudadanos en espera con detalle
     $ciudadanosEnEspera = DB::table('turnos')
+        ->leftJoin('tipos_turno', 'turnos.tipo_turno_id', '=', 'tipos_turno.id')
         ->leftJoin('atenciones', function($join) {
             $join->on('turnos.id', '=', 'atenciones.turno_id')
-                 ->whereIn('atenciones.estado', ['En Curso', 'Completado', 'No Asistió']);
+                 ->whereIn('atenciones.estado_id', [2, 3, 4]);
         })
         ->whereNull('atenciones.id')
-        ->whereDate('turnos.created_at', today())
+        
         ->orderBy('turnos.id', 'asc')
-        ->select('turnos.*')
+        ->select('turnos.*', 'tipos_turno.nombre as tipo')
         ->limit(10)
         ->get()
         ->map(function($t) {
@@ -401,17 +413,18 @@ Route::get('/api/coordinador/datos', function () {
     }
 
     $turnosEnEsperaCount = DB::table('turnos')
+        ->leftJoin('tipos_turno', 'turnos.tipo_turno_id', '=', 'tipos_turno.id')
         ->leftJoin('atenciones', function($join) {
             $join->on('turnos.id', '=', 'atenciones.turno_id')
-                 ->whereIn('atenciones.estado', ['En Curso', 'Completado', 'No Asistió']);
+                 ->whereIn('atenciones.estado_id', [2, 3, 4]);
         })
         ->whereNull('atenciones.id')
-        ->whereDate('turnos.created_at', today())
+        
         ->count();
 
     $tiempoPromedio = DB::table('atenciones')
-        ->whereDate('created_at', today())
-        ->where('estado', 'Completado')
+        
+        ->where('estado_id', 3)
         ->whereNotNull('hora_inicio')
         ->whereNotNull('hora_fin')
         ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, hora_inicio, hora_fin)) as promedio')
@@ -419,27 +432,27 @@ Route::get('/api/coordinador/datos', function () {
 
     $totalAsesores  = DB::table('asesores')->count();
     $asesoresActivos = DB::table('atenciones')
-        ->where('estado', 'En Curso')
+        ->where('estado_id', 2)
         ->distinct('asesor_id')
         ->count('asesor_id');
 
     $atencionesHoyCount = DB::table('atenciones')
-        ->whereDate('created_at', today())
-        ->whereIn('estado', ['Completado', 'No Asistió'])
+        
+        ->whereIn('estado_id', [3, 4])
         ->count();
 
     $asesoresData = DB::table('asesores')
         ->join('users', 'asesores.user_id', '=', 'users.id')
         ->leftJoin('atenciones', function($join) {
             $join->on('asesores.id', '=', 'atenciones.asesor_id')
-                 ->where('atenciones.estado', '=', 'En Curso');
+                 ->where('atenciones.estado_id', '=', 2);
         })
         ->leftJoin('turnos', 'atenciones.turno_id', '=', 'turnos.id')
         ->select(
             'asesores.id',
             'users.name',
             'asesores.taquilla',
-            'atenciones.estado as atencion_estado',
+            'estados_atencion.nombre as atencion_estado',
             'turnos.turno_numero',
             'atenciones.hora_inicio'
         )
@@ -467,14 +480,15 @@ Route::get('/api/coordinador/datos', function () {
         ->toArray();
 
     $ciudadanosEnEspera = DB::table('turnos')
+        ->leftJoin('tipos_turno', 'turnos.tipo_turno_id', '=', 'tipos_turno.id')
         ->leftJoin('atenciones', function($join) {
             $join->on('turnos.id', '=', 'atenciones.turno_id')
-                 ->whereIn('atenciones.estado', ['En Curso', 'Completado', 'No Asistió']);
+                 ->whereIn('atenciones.estado_id', [2, 3, 4]);
         })
         ->whereNull('atenciones.id')
-        ->whereDate('turnos.created_at', today())
+        
         ->orderBy('turnos.id', 'asc')
-        ->select('turnos.*')
+        ->select('turnos.*', 'tipos_turno.nombre as tipo')
         ->limit(10)
         ->get()
         ->map(function($t) {
@@ -508,7 +522,7 @@ Route::get('/api/coordinador/datos', function () {
 // ============================================================
 Route::get('/dashboard', function () {
     $user = request()->user();
-    if ($user->role === 'coordinador') {
+    if ($user->role_id === 2) {
         return redirect()->route('dashboard.coordinador');
     }
     return redirect()->route('dashboard.asesor');

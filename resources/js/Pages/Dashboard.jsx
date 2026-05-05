@@ -48,13 +48,19 @@ function useTimer() {
     return { display, running, start, stop, reset, seconds };
 }
 
-export default function Dashboard({ auth }) {
+export default function Dashboard({ auth, turnosEnEspera, atencionActiva, historialAsesor, statsHoy }) {
     const user = auth.user;
     const { display: elapsed, running: timerRunning, start: startTimer, stop: stopTimer, reset: resetTimer } = useTimer();
 
-    const [queueItems, setQueueItems] = useState(initialQueue.slice(1));
-    const [activeTurn, setActiveTurn] = useState(initialQueue[0]);
-    const [historyItems, setHistoryItems] = useState(HISTORY);
+    const [queueItems, setQueueItems] = useState(turnosEnEspera || []);
+    const [activeTurn, setActiveTurn] = useState(atencionActiva || null);
+    const [historyItems, setHistoryItems] = useState(historialAsesor || []);
+
+    useEffect(() => {
+        setQueueItems(turnosEnEspera || []);
+        setActiveTurn(atencionActiva || null);
+        setHistoryItems(historialAsesor || []);
+    }, [turnosEnEspera, atencionActiva, historialAsesor]);
     
     const [steps, setSteps] = useState({ llamado: null, checkin: null, consultoria: null, cierre: null });
     const [isPaused, setIsPaused] = useState(false);
@@ -66,6 +72,7 @@ export default function Dashboard({ auth }) {
     const avanzaTurnoAnimate = (estado) => {
         setIsPaused(false);
         stopTimer();
+        // Anulamos su uso directo para usar router.post
         
         if (activeTurn) {
             const newHistory = {
@@ -95,11 +102,15 @@ export default function Dashboard({ auth }) {
     };
 
     const handleSiguienteTurnoManual = () => {
-        avanzaTurnoAnimate('ASIGNADO/OTRO');
+        if (queueItems.length > 0) {
+            router.post('/asesor/llamar-turno', { turno_id: queueItems[0].id });
+        }
     };
 
     const handleNoAsistio = () => {
-        avanzaTurnoAnimate('NO ASISTIÃ“');
+        if (activeTurn) {
+            router.post('/asesor/finalizar-turno', { estado: 'No AsistiÃ³', observaciones });
+        }
     };
 
     useEffect(() => {
@@ -155,9 +166,15 @@ export default function Dashboard({ auth }) {
         stopTimer();
         
         setTimeout(() => {
-            avanzaTurnoAnimate('COMPLETADO');
-            setShowSuccessAnim(false);
-        }, 2200); // DuraciÃ³n de la animaciÃ³n lottie aprox
+            router.post('/asesor/finalizar-turno', { estado: 'Completado', observaciones }, {
+                onFinish: () => {
+                    setShowSuccessAnim(false);
+                    setSteps({ llamado: null, checkin: null, consultoria: null, cierre: null });
+                    setObservaciones('');
+                    resetTimer();
+                }
+            });
+        }, 2200);
     };
 
     return (
@@ -419,7 +436,7 @@ export default function Dashboard({ auth }) {
                             
                             <div className="grid grid-cols-3 gap-4">
                                 <motion.div whileHover={{ scale: 1.05 }} className="bg-gray-100/80 rounded-2xl p-5 flex flex-col justify-center items-center text-center">
-                                    <h4 className="text-3xl font-black text-gray-800 mb-1 leading-none">15<span className="text-base">m</span></h4>
+                                    <h4 className="text-3xl font-black text-gray-800 mb-1 leading-none">{statsHoy?.promedio || 0}<span className="text-base">m</span></h4>
                                     <p className="text-[11px] text-gray-500 font-bold uppercase leading-tight mt-1">Promedio<br/>AtenciÃ³n</p>
                                 </motion.div>
                                 <motion.div whileHover={{ scale: 1.05 }} className="bg-gray-100/80 rounded-2xl p-5 flex flex-col justify-center items-center text-center">
@@ -427,7 +444,7 @@ export default function Dashboard({ auth }) {
                                     <p className="text-[11px] text-gray-500 font-bold uppercase leading-tight mt-1">Tiempo<br/>Libre</p>
                                 </motion.div>
                                 <motion.div whileHover={{ scale: 1.05 }} className="bg-gray-100/80 rounded-2xl p-5 flex flex-col justify-center items-center text-center">
-                                    <h4 className="text-3xl font-black text-gray-800 mb-1 leading-none">{historyItems.length + 130}</h4>
+                                    <h4 className="text-3xl font-black text-gray-800 mb-1 leading-none">{statsHoy?.total || 0}</h4>
                                     <p className="text-[11px] text-gray-500 font-bold uppercase leading-tight mt-1">Turnos<br/>Hoy</p>
                                 </motion.div>
                             </div>
