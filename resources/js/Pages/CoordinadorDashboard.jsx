@@ -59,6 +59,32 @@ export default function CoordinadorDashboard({ auth, kpis: initialKpis, asesores
             }
         });
     };
+    
+    const [mesFiltroOficina, setMesFiltroOficina] = useState('');
+    const [statsOficinaMes, setStatsOficinaMes] = useState(null);
+    const [mesFiltroAsesor, setMesFiltroAsesor] = useState('');
+    const [statsAsesorMes, setStatsAsesorMes] = useState(null);
+
+    useEffect(() => {
+        if (mesFiltroOficina) {
+            fetch(`/api/coordinador/datos?mes=${mesFiltroOficina}`)
+                .then(res => res.json())
+                .then(data => setStatsOficinaMes(data));
+        } else {
+            setStatsOficinaMes(null);
+        }
+    }, [mesFiltroOficina]);
+
+    useEffect(() => {
+        if (selectedAsesorView && mesFiltroAsesor) {
+            fetch(`/api/coordinador/datos?mes=${mesFiltroAsesor}&asesor_id=${selectedAsesorView.id}`)
+                .then(res => res.json())
+                .then(data => setStatsAsesorMes(data));
+        } else {
+            setStatsAsesorMes(null);
+        }
+    }, [mesFiltroAsesor, selectedAsesorView]);
+
     const [filtroAsesor, setFiltroAsesor] = useState('todos');
     
     const [kpis, setKpis] = useState(initialKpis);
@@ -87,8 +113,8 @@ export default function CoordinadorDashboard({ auth, kpis: initialKpis, asesores
         }
     };
 
-    const handleToggleActivo = (asesorId) => {
-        router.post(route('coordinador.toggle-activo'), {
+    const handleToggleVictimas = (asesorId) => {
+        router.post(route('coordinador.toggle-victimas'), {
             asesor_id: asesorId
         }, { preserveScroll: true });
     };
@@ -260,10 +286,10 @@ export default function CoordinadorDashboard({ auth, kpis: initialKpis, asesores
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     <div className="flex items-center justify-center gap-3">
-                                                        <button onClick={() => handleToggleActivo(asesor.id)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${
-                                                            asesor.activo ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'
+                                                        <button onClick={() => handleToggleVictimas(asesor.id)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${
+                                                            asesor.tipo_asesor === 'Víctimas' ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'
                                                         }`}>
-                                                            {asesor.activo ? 'Desactivar' : 'Activar'}
+                                                            {asesor.tipo_asesor === 'Víctimas' ? 'Quitar Víctimas' : 'Asignar a Víctimas'}
                                                         </button>
                                                         <button onClick={() => setSelectedAsesorMsg(asesor)} className="p-2.5 text-slate-400 hover:text-green-500 hover:bg-green-50 rounded-xl transition-all shadow-sm">
                                                             <MessageSquare size={20} />
@@ -318,6 +344,39 @@ export default function CoordinadorDashboard({ auth, kpis: initialKpis, asesores
                                 </AnimatePresence>
                             </div>
                         </div>
+
+                        {/* FILTRO GLOBAL DE LA OFICINA */}
+                        <div className="bg-white border border-slate-100 rounded-[32px] shadow-sm overflow-hidden flex flex-col p-6 mt-6">
+                            <div className="flex items-center justify-between gap-3 mb-6">
+                                <h3 className="text-lg font-black text-slate-800 flex items-center gap-3">
+                                    <BarChart size={22} className="text-[#39A900]" />
+                                    Totalidad de la Oficina
+                                </h3>
+                                <input 
+                                    type="month" 
+                                    className="text-xs border-slate-200 rounded-xl px-2 py-1 outline-none focus:border-[#39A900] focus:ring-2 focus:ring-[#39A900]/20 text-slate-600 font-bold"
+                                    value={mesFiltroOficina}
+                                    onChange={(e) => setMesFiltroOficina(e.target.value)}
+                                />
+                            </div>
+                            
+                            {statsOficinaMes ? (
+                                <div className="flex flex-col gap-3">
+                                    <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center border border-slate-100">
+                                        <span className="text-xs font-black text-slate-400 uppercase">Atenciones en {mesFiltroOficina}</span>
+                                        <span className="text-2xl font-black text-[#39A900]">{statsOficinaMes.atenciones}</span>
+                                    </div>
+                                    <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center border border-slate-100">
+                                        <span className="text-xs font-black text-slate-400 uppercase">Tiempo Promedio</span>
+                                        <span className="text-2xl font-black text-slate-800">{statsOficinaMes.tiempoPromedio} min</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-xs text-slate-400 text-center py-6 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                    Selecciona un mes para ver las estadísticas históricas de toda la oficina.
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </main>
@@ -343,7 +402,7 @@ export default function CoordinadorDashboard({ auth, kpis: initialKpis, asesores
                             <div className="p-8 space-y-6">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="bg-slate-50 p-4 rounded-2xl">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase">Turno</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase">Turno Actual</p>
                                         <p className="text-2xl font-black">{selectedAsesorView?.turn}</p>
                                     </div>
                                     <div className="bg-slate-50 p-4 rounded-2xl">
@@ -351,7 +410,35 @@ export default function CoordinadorDashboard({ auth, kpis: initialKpis, asesores
                                         <p className="text-2xl font-black text-[#39A900]">{selectedAsesorView?.time}</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setSelectedAsesorView(null)} className="w-full bg-[#39A900] text-white py-4 rounded-2xl font-black">CERRAR VISTA</button>
+
+                                <div className="border-t border-slate-100 pt-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="text-sm font-black text-slate-800">Historial del Asesor</h4>
+                                        <input 
+                                            type="month" 
+                                            className="text-xs border-slate-200 rounded-xl px-2 py-1 outline-none focus:border-[#39A900] text-slate-600 font-bold bg-slate-50"
+                                            value={mesFiltroAsesor}
+                                            onChange={(e) => setMesFiltroAsesor(e.target.value)}
+                                        />
+                                    </div>
+                                    
+                                    {statsAsesorMes ? (
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-green-50 p-3 rounded-xl">
+                                                <p className="text-[10px] font-black text-green-600 uppercase mb-1">Atenciones</p>
+                                                <p className="text-xl font-black text-green-700">{statsAsesorMes.atenciones}</p>
+                                            </div>
+                                            <div className="bg-blue-50 p-3 rounded-xl">
+                                                <p className="text-[10px] font-black text-blue-600 uppercase mb-1">Promedio</p>
+                                                <p className="text-xl font-black text-blue-700">{statsAsesorMes.tiempoPromedio}m</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-slate-400 text-center py-2 font-bold">Selecciona un mes para ver datos históricos</p>
+                                    )}
+                                </div>
+
+                                <button onClick={() => { setSelectedAsesorView(null); setMesFiltroAsesor(''); }} className="w-full bg-slate-800 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-slate-700 transition-colors">CERRAR VISTA</button>
                             </div>
                         </motion.div>
                     </div>

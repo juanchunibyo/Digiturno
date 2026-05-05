@@ -83,11 +83,11 @@ class TurnoController extends Controller
                 ->whereRaw('TIMESTAMPDIFF(SECOND, asesores.last_activity, NOW()) < 20');
 
             // Si el turno es especializado (ej: Víctimas), buscamos un asesor de ese tipo
-            if ($request->tipo !== 'General') {
-                $queryAsesor->where('asesores.tipo_asesor', $request->tipo);
+            if ($request->tipo === 'Víctimas' || $request->tipo === 'Víctima') {
+                $queryAsesor->where('asesores.tipo_asesor', 'Víctimas');
             } else {
-                // Si el turno es General, buscamos un asesor General
-                $queryAsesor->where('asesores.tipo_asesor', 'General');
+                // Para los demás turnos (General, Empresa, Prioritaria), TODOS los asesores (incluso los de Víctimas)
+                // pueden atenderlos. "todas las victimas y el resto a el y los demas todas pero sin victimas"
             }
 
             $asesorDisponible = $queryAsesor->select('asesores.id')->first();

@@ -368,14 +368,15 @@ Route::post('/coordinador/cambiar-taquilla', function () {
     return back();
 })->middleware(['auth', 'verified'])->name('coordinador.taquilla');
 
-Route::post('/coordinador/toggle-activo', function () {
+Route::post('/coordinador/toggle-victimas', function () {
     if (request()->user()->role !== 'coordinador') abort(403);
     $asesor = Asesor::find(request('asesor_id'));
     if ($asesor) {
-        $asesor->update(['activo' => !$asesor->activo]);
+        $nuevoTipo = $asesor->tipo_asesor === 'Víctimas' ? 'General' : 'Víctimas';
+        $asesor->update(['tipo_asesor' => $nuevoTipo]);
     }
     return back();
-})->middleware(['auth', 'verified'])->name('coordinador.toggle-activo');
+})->middleware(['auth', 'verified'])->name('coordinador.toggle-victimas');
 
 Route::post('/coordinador/enviar-mensaje', function () {
     if (request()->user()->role !== 'coordinador') abort(403);
@@ -439,11 +440,34 @@ Route::post('/asesor/finalizar-turno', function () {
         al cambiar su estado a 'Completado' o 'No Asistió'.
         */
 
-        // --- ASIGNACIÓN AUTOMÁTICA INTELIGENTE (Estrategia 2x1) ---
-        // 1. Los asesores de "Víctimas" NO reciben turnos automáticos
-        if ($asesor->tipo_asesor !== 'Víctimas') {
-            
-            // Consultar los últimos 3 turnos atendidos globalmente (excluyendo Víctimas)
+        // --- ASIGNACIÓN AUTOMÁTICA INTELIGENTE ---
+        $siguienteTurno = null;
+
+        if ($asesor->tipo_asesor === 'Víctimas') {
+            // Asesor Víctimas: Primero busca Víctimas
+            $siguienteTurno = DB::table('turnos')
+                ->leftJoin('atenciones', 'turnos.id', '=', 'atenciones.turno_id')
+                ->whereNull('atenciones.id')
+                ->where('turnos.tipo', 'Víctimas')
+                ->whereDate('turnos.created_at', today())
+                ->orderBy('turnos.id', 'asc')
+                ->select('turnos.*')
+                ->first();
+                
+            if (!$siguienteTurno) {
+                // Y el resto a él (busca cualquier otro que NO sea víctimas)
+                $siguienteTurno = DB::table('turnos')
+                    ->leftJoin('atenciones', 'turnos.id', '=', 'atenciones.turno_id')
+                    ->whereNull('atenciones.id')
+                    ->where('turnos.tipo', '!=', 'Víctimas')
+                    ->whereDate('turnos.created_at', today())
+                    ->orderBy('turnos.id', 'asc')
+                    ->select('turnos.*')
+                    ->first();
+            }
+        } else {
+            // Los demás todas pero sin víctimas
+            // Lógica 2x1 original excluyendo víctimas
             $ultimasAtenciones = DB::table('atenciones')
                 ->where('tipo', '!=', 'Víctimas')
                 ->whereDate('created_at', today())
@@ -451,10 +475,7 @@ Route::post('/asesor/finalizar-turno', function () {
                 ->take(3)
                 ->pluck('tipo');
 
-            // Contar cuántos prioritarios hubo en los últimos 3
             $prioritariosEnLinea = $ultimasAtenciones->filter(fn($t) => str_contains(strtolower($t), 'priorit'))->count();
-            
-            // Lógica 2x1: Si ya atendimos 2 prioritarios seguidos, buscamos uno General/Empresa
             $forzarGeneral = ($prioritariosEnLinea >= 2);
 
             $query = DB::table('turnos')
@@ -465,10 +486,8 @@ Route::post('/asesor/finalizar-turno', function () {
                 ->orderBy('turnos.id', 'asc');
 
             if ($forzarGeneral) {
-                // Forzamos buscar uno que NO sea prioritario
                 $query->where('turnos.tipo', 'NOT LIKE', '%Prioritaria%');
             } else {
-                // Si no hay que forzar general, intentamos priorizar Prioritaria si hay disponibles
                 $hayPrioritarios = (clone $query)->where('turnos.tipo', 'LIKE', '%Prioritaria%')->exists();
                 if ($hayPrioritarios) {
                     $query->where('turnos.tipo', 'LIKE', '%Prioritaria%');
@@ -479,30 +498,29 @@ Route::post('/asesor/finalizar-turno', function () {
             if ($asesor->tipo_asesor && $asesor->tipo_asesor !== 'General') {
                 $query->where('turnos.tipo', $asesor->tipo_asesor);
             }
-
-            $siguienteTurno = $query->select('turnos.id', 'turnos.tipo')->first();
-
-            // Si no encontramos nada con la restricción forzada, intentamos buscar cualquier cosa (excepto víctimas)
-            if (!$siguienteTurno) {
+            $siguienteTurno = $query->select('turnos.*')->first();
+            
+            // Si es Empresa/Prioritaria y no hay, agarra General
+            if (!$siguienteTurno && $asesor->tipo_asesor !== 'General') {
                 $siguienteTurno = DB::table('turnos')
                     ->leftJoin('atenciones', 'turnos.id', '=', 'atenciones.turno_id')
                     ->whereNull('atenciones.id')
-                    ->where('turnos.tipo', '!=', 'Víctimas')
+                    ->where('turnos.tipo', 'General')
                     ->whereDate('turnos.created_at', today())
                     ->orderBy('turnos.id', 'asc')
-                    ->select('turnos.id', 'turnos.tipo')
+                    ->select('turnos.*')
                     ->first();
             }
+        }
 
-            if ($siguienteTurno) {
-                Atencion::create([
-                    'turno_id'    => $siguienteTurno->id,
-                    'asesor_id'   => $asesor->id,
-                    'tipo'        => $siguienteTurno->tipo,
-                    'hora_inicio' => now(),
-                    'estado'      => 'Llamando',
-                ]);
-            }
+        if ($siguienteTurno) {
+            Atencion::create([
+                'turno_id'    => $siguienteTurno->id,
+                'asesor_id'   => $asesor->id,
+                'tipo'        => $siguienteTurno->tipo,
+                'hora_inicio' => now(),
+                'estado'      => 'Llamando',
+            ]);
         }
     }
 
@@ -559,6 +577,7 @@ Route::get('/dashboard-coordinador', function () {
             'users.name',
             'asesores.taquilla',
             'asesores.activo',
+            'asesores.tipo_asesor',
             'atenciones.estado as atencion_estado',
             'turnos.turno_numero',
             'atenciones.hora_inicio',
@@ -581,6 +600,7 @@ Route::get('/dashboard-coordinador', function () {
                 'status'   => $status,
                 'isOnline' => $isOnline,
                 'activo'   => $a->activo ?? true,
+                'tipo_asesor' => $a->tipo_asesor,
                 'turn'     => $a->turno_numero ?? '--',
                 'time'     => (in_array($a->atencion_estado, ['Llamando', 'En Curso'])) ? "$m:$s" : '--',
                 'timeInSeconds' => (int)$timeInSeconds,
@@ -636,6 +656,36 @@ Route::get('/api/coordinador/datos', function () {
         abort(403);
     }
 
+    if (request('mes')) {
+        $mes = request('mes'); // Formato YYYY-MM
+        $query = DB::table('atenciones')
+            ->where('estado', 'Completado')
+            ->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$mes]);
+
+        if (request('asesor_id')) {
+            $query->where('asesor_id', request('asesor_id'));
+        }
+
+        $atencionesCount = (clone $query)->count();
+        $promedio = (clone $query)
+            ->whereNotNull('hora_inicio')
+            ->whereNotNull('hora_fin')
+            ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, hora_inicio, hora_fin)) as promedio')
+            ->value('promedio');
+
+        $porTipo = (clone $query)
+            ->select('tipo', DB::raw('count(*) as total'))
+            ->groupBy('tipo')
+            ->get();
+
+        return response()->json([
+            'isHistorial' => true,
+            'atenciones' => $atencionesCount,
+            'tiempoPromedio' => $promedio ? round($promedio / 60) : 0,
+            'porTipo' => $porTipo
+        ]);
+    }
+
     $turnosEnEsperaCount = DB::table('turnos')
         ->leftJoin('atenciones', function($join) {
             $join->on('turnos.id', '=', 'atenciones.turno_id')
@@ -676,6 +726,7 @@ Route::get('/api/coordinador/datos', function () {
             'users.name',
             'asesores.taquilla',
             'asesores.activo',
+            'asesores.tipo_asesor',
             'atenciones.estado as atencion_estado',
             'turnos.turno_numero',
             'atenciones.hora_inicio',
@@ -698,6 +749,7 @@ Route::get('/api/coordinador/datos', function () {
                 'status'   => $status,
                 'isOnline' => $isOnline,
                 'activo'   => $a->activo ?? true,
+                'tipo_asesor' => $a->tipo_asesor,
                 'turn'     => $a->turno_numero ?? '--',
                 'time'     => (in_array($a->atencion_estado, ['Llamando', 'En Curso'])) ? "$m:$s" : '--',
                 'timeInSeconds' => (int)$timeInSeconds,
