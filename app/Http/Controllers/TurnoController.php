@@ -45,13 +45,12 @@ class TurnoController extends Controller
             ]);
 
             // 2. Generar número único
-            $prefijos = [
-                'General'     => 'G',
-                'Prioritaria' => 'P',
-                'Víctimas'    => 'V',
-                'Empresa'     => 'E',
-            ];
-            $prefijo = $prefijos[$request->tipo] ?? 'G';
+            $t = strtolower($request->tipo);
+            $prefijo = 'G';
+            if (str_contains($t, 'víctima')) $prefijo = 'V';
+            elseif (str_contains($t, 'priorit')) $prefijo = 'P';
+            elseif (str_contains($t, 'empresa')) $prefijo = 'E';
+            elseif (str_contains($t, 'interna')) $prefijo = 'I';
             
             // Bloqueamos la tabla para que nadie más cuente mientras generamos el número
             $count = DB::table('turnos')
@@ -72,30 +71,46 @@ class TurnoController extends Controller
                 'updated_at'     => now(),
             ]);
 
-            // 4. ASIGNACIÓN AUTOMÁTICA (El asesor nunca llama)
-            // Buscamos un asesor disponible que sea compatible con el tipo de turno y que esté ONLINE (actividad reciente < 20s)
-            $queryAsesor = DB::table('asesores')
+            // 4. ASIGNACIÓN AUTOMÁTICA
+            $asesoresDisponibles = DB::table('asesores')
                 ->leftJoin('atenciones', function($join) {
                     $join->on('asesores.id', '=', 'atenciones.asesor_id')
                          ->whereIn('atenciones.estado', ['Llamando', 'En Curso']);
                 })
                 ->whereNull('atenciones.id')
-                ->whereRaw('TIMESTAMPDIFF(SECOND, asesores.last_activity, NOW()) < 20');
+                ->whereRaw('TIMESTAMPDIFF(SECOND, asesores.last_activity, NOW()) < 20')
+                ->select('asesores.id', 'asesores.tipo_asesor')
+                ->get();
 
-            // Si el turno es especializado (ej: Víctimas), buscamos un asesor de ese tipo
+            $asesorFinalId = null;
+
             if ($request->tipo === 'Víctimas' || $request->tipo === 'Víctima') {
-                $queryAsesor->where('asesores.tipo_asesor', 'Víctimas');
+                // Para turnos de Víctimas: Solo especialistas
+                $asesorFinalId = $asesoresDisponibles->where('tipo_asesor', 'Víctimas')->first()?->id;
             } else {
-                // Para los demás turnos (General, Empresa, Prioritaria), TODOS los asesores (incluso los de Víctimas)
-                // pueden atenderlos. "todas las victimas y el resto a el y los demas todas pero sin victimas"
+                // Para turnos Generales/Otros:
+                // 1. Preferir asesores que NO sean de Víctimas
+                $asesorFinalId = $asesoresDisponibles->where('tipo_asesor', '!=', 'Víctimas')->first()?->id;
+
+                // 2. Si no hay generales libres, ver si un especialista puede (solo si no tiene cola de víctimas)
+                if (!$asesorFinalId) {
+                    $hayVictimasEnEspera = DB::table('turnos')
+                        ->leftJoin('atenciones', 'turnos.id', '=', 'atenciones.turno_id')
+                        ->whereNull('atenciones.id')
+                        ->where('turnos.tipo', 'Víctimas')
+                        ->whereDate('turnos.created_at', today())
+                        ->exists();
+
+                    if (!$hayVictimasEnEspera) {
+                        $asesorFinalId = $asesoresDisponibles->where('tipo_asesor', 'Víctimas')->first()?->id;
+                    }
+                }
             }
 
-            $asesorDisponible = $queryAsesor->select('asesores.id')->first();
-
-            if ($asesorDisponible) {
+            if ($asesorFinalId) {
                 DB::table('atenciones')->insert([
                     'turno_id'    => $turnoId,
-                    'asesor_id'   => $asesorDisponible->id,
+                    'asesor_id'   => $asesorFinalId,
                     'tipo'        => $request->tipo,
                     'hora_inicio' => now(),
                     'estado'      => 'Llamando',

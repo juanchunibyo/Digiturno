@@ -30,8 +30,13 @@ export default function Registro() {
         'PA': 15, // Por si se agrega después
     };
 
+    const isDocValid = (docType?.includes('C.C') || docType?.includes('CC'))
+        ? (docNumber.length >= 7 && docNumber.length <= 12)
+        : (docNumber.length === DOC_LIMITS[docType]);
+
     const handleGenerarTurno = () => {
-        if (docNumber.length < 6 || processing) return;
+        if (processing || !isDocValid) return;
+
         setProcessing(true);
         router.post(route('turno.generar'), {
             tipo_documento: docType,
@@ -39,7 +44,9 @@ export default function Registro() {
             telefono: phoneNumber || null,
             tipo: tipo_poblacion || 'General',
         }, {
+            onSuccess: () => console.log("Turno generado"),
             onError: () => setProcessing(false),
+            onFinish: () => setProcessing(false)
         });
     };
 
@@ -101,7 +108,7 @@ export default function Registro() {
                             <span className={`inline-block px-4 py-1.5 rounded-full ${theme.bg} border border-white/5 ${theme.text} text-[10px] font-black uppercase tracking-[0.3em] mb-4`}>{tipo_poblacion || 'Atención General'}</span>
                             <h2 className="text-4xl lg:text-5xl font-black text-white tracking-tighter leading-none">Complete sus Datos</h2>
                         </div>
-                        <div className="space-y-10 relative z-10">
+                        <div className="space-y-6 relative z-10">
                             <div>
                                 <label className="flex items-center gap-2 text-[11px] font-black text-gray-500 uppercase mb-4 tracking-[0.2em]"><CreditCard size={14} style={{ color: theme.primary }} /> Seleccione Tipo de Documento</label>
                                 <div className="grid grid-cols-4 gap-3">
@@ -117,9 +124,42 @@ export default function Registro() {
                                         <div className={`w-2 h-2 rounded-full transition-all duration-300 ${activeInput === 'docNumber' ? 'scale-125 shadow-[0_0_10px]' : 'opacity-30'}`} style={{ backgroundColor: theme.primary }}></div>
                                         Número de Identificación
                                     </label>
-                                    <span className="text-[10px] font-black text-white/40 tracking-widest">{docNumber.length} / {DOC_LIMITS[docType]}</span>
+                                    <span className="text-[10px] font-black text-white/40 tracking-widest">{docNumber.length} / {docType === 'C.C.' ? '8-10' : DOC_LIMITS[docType]}</span>
                                 </div>
-                                <div onClick={() => setActiveInput('docNumber')} className={`w-full font-mono font-black tracking-[0.3em] text-center rounded-[30px] border-2 transition-all duration-300 p-6 text-4xl lg:text-5xl shadow-2xl cursor-pointer ${activeInput === 'docNumber' ? 'border-white bg-white/5 text-white ring-4 ring-white/5' : 'border-white/5 bg-black/40 text-gray-600'}`}>{docNumber || '--------'}</div>
+                                <div 
+                                    onClick={() => setActiveInput('docNumber')} 
+                                    className={`w-full font-mono font-black tracking-[0.3em] text-center rounded-[30px] border-2 transition-all duration-300 p-4 lg:p-6 text-4xl lg:text-5xl shadow-2xl cursor-pointer relative ${
+                                        isDocValid 
+                                            ? 'border-[#39A900] bg-[#39A900]/10 text-white shadow-[0_0_30px_rgba(57,169,0,0.4)]'
+                                            : activeInput === 'docNumber' 
+                                                ? 'border-white bg-white/5 text-white ring-4 ring-white/5' 
+                                                : 'border-white/5 bg-black/40 text-gray-600'
+                                    }`}
+                                >
+                                    {docNumber || '--------'}
+                                    <AnimatePresence>
+                                        {isDocValid && (
+                                            <motion.div 
+                                                initial={{ scale: 0, opacity: 0 }} 
+                                                animate={{ scale: 1, opacity: 1 }} 
+                                                exit={{ scale: 0, opacity: 0 }}
+                                                className="absolute -right-4 -top-4 bg-[#39A900] p-3 rounded-full shadow-[0_0_20px_rgba(57,169,0,0.6)] border-4 border-[#0a1a14] z-30"
+                                            >
+                                                <CheckCircle2 size={24} className="text-white" />
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+                            <div className="relative">
+                                <div className="flex justify-between items-center mb-4">
+                                    <label className="flex items-center gap-3 text-xs font-black text-gray-500 uppercase tracking-[0.2em]">
+                                        <div className={`w-2 h-2 rounded-full transition-all duration-300 ${activeInput === 'phoneNumber' ? 'scale-125 shadow-[0_0_10px]' : 'opacity-30'}`} style={{ backgroundColor: theme.primary }}></div>
+                                        Teléfono Celular (Opcional)
+                                    </label>
+                                    <span className="text-[10px] font-black text-white/40 tracking-widest">{phoneNumber.length} / 10</span>
+                                </div>
+                                <div onClick={() => setActiveInput('phoneNumber')} className={`w-full font-mono font-black tracking-[0.3em] text-center rounded-[30px] border-2 transition-all duration-300 p-4 lg:p-6 text-2xl lg:text-3xl shadow-2xl cursor-pointer ${activeInput === 'phoneNumber' ? 'border-white bg-white/5 text-white ring-4 ring-white/5' : 'border-white/5 bg-black/40 text-gray-600'}`}>{phoneNumber || '----------'}</div>
                             </div>
                         </div>
                     </section>
@@ -140,7 +180,18 @@ export default function Registro() {
             <footer className="relative z-20 p-8 bg-black/60 backdrop-blur-3xl border-t border-white/5 shadow-2xl">
                 <div className="max-w-6xl mx-auto flex gap-8">
                     <Link href="/seleccion" className="flex-1 py-6 bg-white/[0.03] text-white rounded-2xl text-xl font-black border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-4 active:scale-95 uppercase tracking-widest"><ArrowLeft size={24} /> Volver</Link>
-                    <button onClick={handleGenerarTurno} disabled={docNumber.length < 6 || processing} className={`flex-[2] py-6 rounded-2xl text-2xl font-black flex items-center justify-center gap-4 transition-all uppercase tracking-[0.2em] ${docNumber.length >= 6 && !processing ? 'bg-white text-black shadow-2xl hover:-translate-y-1 active:scale-95' : 'bg-white/5 text-gray-700 border border-white/5 pointer-events-none'}`}>{processing ? 'Generando...' : 'Generar Turno'}<ArrowRight size={32} /></button>
+                    <button 
+                        onClick={handleGenerarTurno} 
+                        disabled={!isDocValid || processing} 
+                        className={`flex-[2] py-6 rounded-2xl text-2xl font-black flex items-center justify-center gap-4 transition-all uppercase tracking-[0.2em] shadow-2xl ${
+                            isDocValid && !processing 
+                                ? 'bg-[#39A900] text-white hover:bg-[#2d8500] hover:-translate-y-1 active:scale-95' 
+                                : 'bg-white/5 text-gray-700 border border-white/5 cursor-not-allowed'
+                        }`}
+                    >
+                        {processing ? 'Generando...' : 'Generar Turno'}
+                        {!processing && <ArrowRight size={32} />}
+                    </button>
                 </div>
             </footer>
         </div>

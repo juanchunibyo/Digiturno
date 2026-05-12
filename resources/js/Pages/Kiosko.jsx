@@ -13,6 +13,8 @@ export default function Kiosko({ flash }) {
     const [tipoPoblacion, setTipoPoblacion] = useState('General');
     const [docType, setDocType] = useState('C.C.');
     const [docNumber, setDocNumber] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [activeInput, setActiveInput] = useState('docNumber');
     const [processing, setProcessing] = useState(false);
     const [lastTurn, setLastTurn] = useState(null);
 
@@ -42,6 +44,7 @@ export default function Kiosko({ flash }) {
             const res = await axios.post(route('turno.generar'), {
                 tipo_documento: docType,
                 documento: docNumber,
+                telefono: phoneNumber || null,
                 tipo: tipoPoblacion
             });
             setLastTurn(res.data.turno_numero || 'T-000');
@@ -61,6 +64,8 @@ export default function Kiosko({ flash }) {
     const resetKiosko = () => {
         setStep(0);
         setDocNumber('');
+        setPhoneNumber('');
+        setActiveInput('docNumber');
         setLastTurn(null);
     };
 
@@ -75,9 +80,25 @@ export default function Kiosko({ flash }) {
     }, [step]);
 
     const handleKeypad = (val) => {
-        const limit = DOC_LIMITS[docType] || 15;
-        if (docNumber.length < limit) setDocNumber(prev => prev + val);
+        if (activeInput === 'docNumber') {
+            const limit = DOC_LIMITS[docType] || 15;
+            if (docNumber.length < limit) setDocNumber(prev => prev + val);
+        } else {
+            if (phoneNumber.length < 10) setPhoneNumber(prev => prev + val);
+        }
     };
+
+    const handleClear = () => {
+        if (activeInput === 'docNumber') setDocNumber('');
+        else setPhoneNumber('');
+    };
+
+    const handleBackspace = () => {
+        if (activeInput === 'docNumber') setDocNumber(p => p.slice(0, -1));
+        else setPhoneNumber(p => p.slice(0, -1));
+    };
+
+    const isDocValid = docNumber.length === DOC_LIMITS[docType];
 
     // VISTAS
     const WelcomeView = () => (
@@ -121,11 +142,26 @@ export default function Kiosko({ flash }) {
                                 <button key={t} onClick={() => { setDocType(t); setDocNumber(''); }} className={`py-6 rounded-3xl font-black text-2xl border-2 transition-all active:scale-95 ${docType === t ? 'bg-white text-black border-white shadow-xl scale-105' : 'border-white/10 text-white/30 hover:border-white/30'}`}>{t}</button>
                             ))}
                         </div>
-                        <div className="p-12 bg-black/40 rounded-[40px] border-2 border-white/10 text-center relative overflow-hidden">
-                            <p className="text-xs font-black text-white/30 uppercase tracking-[0.4em] mb-6">Número de Documento</p>
-                            <div className="flex items-center justify-center min-h-[100px]">
-                                <span className={`font-mono font-black tracking-widest text-white leading-none ${docNumber.length > 10 ? 'text-5xl md:text-6xl' : 'text-6xl md:text-8xl'}`}>
+                        <div className="p-8 bg-black/40 rounded-[40px] border-2 transition-all cursor-pointer relative overflow-hidden mb-6"
+                            onClick={() => setActiveInput('docNumber')}
+                            style={{ borderColor: activeInput === 'docNumber' ? 'white' : 'rgba(255,255,255,0.1)' }}
+                        >
+                            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] mb-4">Número de Documento</p>
+                            <div className="flex items-center justify-center min-h-[60px]">
+                                <span className={`font-mono font-black tracking-widest text-white leading-none ${docNumber.length > 10 ? 'text-4xl md:text-5xl' : 'text-5xl md:text-7xl'}`}>
                                     {docNumber || '----------'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="p-8 bg-black/40 rounded-[40px] border-2 transition-all cursor-pointer relative overflow-hidden"
+                            onClick={() => setActiveInput('phoneNumber')}
+                            style={{ borderColor: activeInput === 'phoneNumber' ? 'white' : 'rgba(255,255,255,0.1)' }}
+                        >
+                            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] mb-4">Teléfono Celular (Opcional)</p>
+                            <div className="flex items-center justify-center min-h-[60px]">
+                                <span className="font-mono font-black tracking-widest text-white leading-none text-4xl md:text-5xl">
+                                    {phoneNumber || '----------'}
                                 </span>
                             </div>
                         </div>
@@ -135,14 +171,27 @@ export default function Kiosko({ flash }) {
                     {[1,2,3,4,5,6,7,8,9].map(n => (
                         <button key={n} onClick={() => handleKeypad(n)} className="h-28 bg-white/[0.07] rounded-3xl text-5xl font-black text-white border border-white/10 hover:bg-white hover:text-black hover:scale-105 transition-all shadow-lg">{n}</button>
                     ))}
-                    <button onClick={() => setDocNumber('')} className="h-28 bg-red-500/10 text-red-500 rounded-3xl font-black text-sm border border-red-500/20 hover:bg-red-500 hover:text-white transition-all">LIMPIAR</button>
+                    <button onClick={handleClear} className="h-28 bg-red-500/10 text-red-500 rounded-3xl font-black text-sm border border-red-500/20 hover:bg-red-500 hover:text-white transition-all">LIMPIAR</button>
                     <button onClick={() => handleKeypad(0)} className="h-28 bg-white/[0.07] rounded-3xl text-5xl font-black text-white border border-white/10 hover:bg-white hover:text-black hover:scale-105 transition-all shadow-lg">0</button>
-                    <button onClick={() => setDocNumber(p => p.slice(0,-1))} className="h-28 bg-orange-500/10 text-orange-500 rounded-3xl font-black text-sm border border-orange-500/20 hover:bg-orange-500 hover:text-white transition-all">BORRAR</button>
+                    <button onClick={handleBackspace} className="h-28 bg-orange-500/10 text-orange-500 rounded-3xl font-black text-sm border border-orange-500/20 hover:bg-orange-500 hover:text-white transition-all">BORRAR</button>
                 </div>
             </div>
             <div className="mt-10 flex gap-8">
                 <button onClick={() => setStep(1)} className="flex-1 py-10 bg-white/5 rounded-[30px] text-2xl font-black text-white/40 border border-white/5 flex items-center justify-center gap-4 hover:text-white hover:bg-white/10 transition-all uppercase tracking-widest active:scale-95"><ArrowLeft size={32}/> VOLVER</button>
-                <button onClick={handleGenerate} disabled={docNumber.length < 6 || processing} className={`flex-[2] py-10 rounded-[30px] text-3xl font-black flex items-center justify-center gap-6 transition-all uppercase tracking-[0.2em] shadow-2xl active:scale-95 ${docNumber.length >= 6 ? 'bg-[#39A900] text-white hover:bg-[#45cc00]' : 'bg-white/5 text-white/10 border border-white/5'}`}>{processing ? 'GENERANDO...' : 'OBTENER TURNO'} <ArrowRight size={40}/></button>
+                <AnimatePresence>
+                    {isDocValid && (
+                        <motion.button 
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            onClick={handleGenerate} 
+                            disabled={processing} 
+                            className="flex-[2] py-10 rounded-[30px] text-3xl font-black flex items-center justify-center gap-6 transition-all uppercase tracking-[0.2em] shadow-2xl active:scale-95 bg-[#39A900] text-white hover:bg-[#45cc00]"
+                        >
+                            {processing ? 'GENERANDO...' : 'OBTENER TURNO'} <ArrowRight size={40}/>
+                        </motion.button>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );
@@ -154,7 +203,7 @@ export default function Kiosko({ flash }) {
             </div>
             <h2 className="text-5xl font-black text-white tracking-tighter mb-4 uppercase">¡Turno Generado!</h2>
             <p className="text-white/40 text-lg mb-12 uppercase tracking-widest">Su turno ha sido registrado correctamente</p>
-            <div className="bg-white p-12 rounded-[50px] shadow-2xl border-b-[15px] border-gray-200 flex flex-col items-center mb-16 relative">
+            <div className="success-anim bg-white p-12 rounded-[50px] shadow-2xl border-b-[15px] border-gray-200 flex flex-col items-center mb-16 relative">
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex gap-2">
                    {[1,2,3,4,5,6].map(i => <div key={i} className="w-4 h-4 bg-[#0a1a14] rounded-full" />)}
                 </div>
@@ -163,7 +212,7 @@ export default function Kiosko({ flash }) {
                 <span className={`text-8xl md:text-9xl font-black tracking-tighter ${theme.text}`}>{lastTurn}</span>
                 <p className="text-[10px] font-bold text-gray-300 mt-8 uppercase">{tipoPoblacion} | {new Date().toLocaleTimeString()}</p>
             </div>
-            <button onClick={resetKiosko} className="px-16 py-6 bg-white/5 text-white rounded-full font-black text-xl hover:bg-white/10 border border-white/10 transition-all uppercase tracking-widest">Finalizar</button>
+            <button onClick={resetKiosko} className="success-anim px-16 py-6 bg-white/5 text-white rounded-full font-black text-xl hover:bg-white/10 border border-white/10 transition-all uppercase tracking-widest">Finalizar</button>
         </motion.div>
     );
 
